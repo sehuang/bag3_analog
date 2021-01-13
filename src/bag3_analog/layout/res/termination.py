@@ -178,7 +178,9 @@ class Termination(ResArrayBase):
         tr_manager = self.tr_manager
         conn_layer = self.place_info.conn_layer
         vm_layer = conn_layer + 1
+        w_sig_hm = tr_manager.get_width(conn_layer, 'sig')
         w_sup_vm = tr_manager.get_width(vm_layer, 'sup')
+        w_sig_vm = tr_manager.get_width(vm_layer, 'sig')
         top_layer = self.place_info.top_layer
         prim_lay_purp = self.tech_cls.tech_info.get_lay_purp_list(conn_layer - 1)[0]
 
@@ -189,76 +191,64 @@ class Termination(ResArrayBase):
         # to the horizontal bars.
         blk_h = self.place_info.height
         hm_warr_list = []
+        # Draw from left edge to right edge
+        xl = self.bound_box.xl
+        xh = self.bound_box.xh
         for yidx in range(ny + 1):
             hm_tidx = self.grid.coord_to_track(conn_layer, blk_h * yidx, RoundMode.NEAREST)
             hm_tid = TrackID(conn_layer, hm_tidx, tr_manager.get_width(conn_layer, 'sup'))
 
-            # Connect dummies to conn layer
-            hm_warrs = []
-            name = "PLUS" if yidx % 2 else 'MINUS'
-            if yidx < ny:
-                # Connect down
-                if yidx < ny_dum or yidx > (ny - ny_dum - 1):
-                    for xidx in range(nx):
-                        bbox = cast(BBox, self.get_device_port(xidx, yidx, name))
-                        hm_warrs.append(self.connect_bbox_to_tracks(Direction.LOWER, prim_lay_purp, bbox, hm_tid))
-                else:
-                    for xidx in range(nx_dum):
-                        bbox = cast(BBox, self.get_device_port(xidx, yidx, name))
-                        hm_warrs.append(self.connect_bbox_to_tracks(Direction.LOWER, prim_lay_purp, bbox, hm_tid))
-                    for xidx in range(nx - nx_dum, nx):
-                        bbox = cast(BBox, self.get_device_port(xidx, yidx, name))
-                        hm_warrs.append(self.connect_bbox_to_tracks(Direction.LOWER, prim_lay_purp, bbox, hm_tid))
+            hm_warr_list.append(self.add_wires(conn_layer, hm_tidx, xl, xh, width=w_sig_hm))
 
-            if yidx > 0:
-                # Connect up
-                if yidx - 1 < ny_dum or yidx - 1 > (ny - ny_dum - 1):
-                    for xidx in range(nx):
-                        bbox = cast(BBox, self.get_device_port(xidx, yidx - 1, name))
-                        hm_warrs.append(self.connect_bbox_to_tracks(Direction.LOWER, prim_lay_purp, bbox, hm_tid))
-                else:
-                    for xidx in range(nx_dum):
-                        bbox = cast(BBox, self.get_device_port(xidx, yidx - 1, name))
-                        hm_warrs.append(self.connect_bbox_to_tracks(Direction.LOWER, prim_lay_purp, bbox, hm_tid))
-                    for xidx in range(nx - nx_dum, nx):
-                        bbox = cast(BBox, self.get_device_port(xidx, yidx - 1, name))
-                        hm_warrs.append(self.connect_bbox_to_tracks(Direction.LOWER, prim_lay_purp, bbox, hm_tid))
+        # Connect dummies to conn layer and to supply straps with vm_layer
+        for yidx in range(ny):
+            # Each row flips direction, so assign direction
+            plus_down = yidx % 2
+            for xidx in range(nx):
+                if (ny_dum <= yidx <= ny - ny_dum - 1) and (nx_dum <= xidx <= nx - nx_dum - 1):
+                    continue
+                for pname in ('MINUS', 'PLUS'):
+                    pport = cast(BBox, self.get_device_port(xidx, yidx, pname))
+                    tidx = self.grid.coord_to_track(conn_layer, pport.ym, RoundMode.NEAREST)
+                    warr_hm = self.connect_bbox_to_tracks(Direction.LOWER, prim_lay_purp, pport,
+                                                          TrackID(conn_layer, tidx, w_sig_hm))
+                    sup_hm = hm_warr_list[yidx + 1] if (pname == 'PLUS') ^ plus_down else hm_warr_list[yidx]
 
-            # If we have bulk, connect bulk
-            if self.has_substrate_port:
-                # Hack to check port layer assumption
-                assert self._unit.get_port('BULK').get_single_layer() == prim_lay_purp[0]
+                    vm_tidx = self.grid.coord_to_track(vm_layer, pport.xm, RoundMode.NEAREST)
+                    self.connect_to_tracks([warr_hm, sup_hm], TrackID(vm_layer, vm_tidx, w_sig_vm))
 
-                # get_device_port does not return multiple bound boxes. This is work around.
-                def _get_transform(_xidx, _yidx):
-                    w = self._info.width
-                    h = self._info.height
-                    orient = Orientation.R0
+        # If we have bulk, connect bulk
+        # Assume that the bulk port is on conn_layer - 1 and can be simply connected
+        # to the conn_layer supply lines.
+        if self.has_substrate_port:
+            # Hack to check port layer assumption
+            assert self._unit.get_port('BULK').get_single_layer() == prim_lay_purp[0]
 
-                    dx = w * _xidx
-                    dy = h * _yidx
-                    if (_xidx & 1) != 0:
-                        dx += w
-                        orient = orient.flip_lr()
-                    if (_yidx & 1) != 0:
-                        dy += h
-                        orient = orient.flip_ud()
+            # get_device_port does not return multiple bound boxes. This is work around.
+            def _get_transform(_xidx, _yidx):
+                w = self._info.width
+                h = self._info.height
+                orient = Orientation.R0
 
-                    return Transform(dx, dy, orient)
-                bulk_bbox_list = self._unit.get_port('BULK').get_pins()
+                dx = w * _xidx
+                dy = h * _yidx
+                if (_xidx & 1) != 0:
+                    dx += w
+                    orient = orient.flip_lr()
+                if (_yidx & 1) != 0:
+                    dy += h
+                    orient = orient.flip_ud()
+
+                return Transform(dx, dy, orient)
+            bulk_bbox_list = self._unit.get_port('BULK').get_pins()
+            for yidx in range(ny):
                 for xidx in range(nx):
                     for bbox in bulk_bbox_list:
-                        if yidx < ny:
-                            bulk_bbox = cast(BBox, bbox).get_transform(_get_transform(xidx, yidx))
-                            hm_warrs.append(
-                                self.connect_bbox_to_tracks(Direction.LOWER, prim_lay_purp, bulk_bbox, hm_tid))
-
-                        if yidx > 0:
-                            bulk_bbox = cast(BBox, bbox).get_transform(_get_transform(xidx, yidx - 1))
-                            hm_warrs.append(
-                                self.connect_bbox_to_tracks(Direction.LOWER, prim_lay_purp, bulk_bbox, hm_tid))
-
-            hm_warr_list.append(self.connect_wires(hm_warrs)[0])
+                        bulk_bbox = cast(BBox, bbox).get_transform(_get_transform(xidx, yidx))
+                        self.connect_bbox_to_track_wires(
+                            Direction.LOWER, prim_lay_purp, bulk_bbox, hm_warr_list[yidx])
+                        self.connect_bbox_to_track_wires(
+                            Direction.LOWER, prim_lay_purp, bulk_bbox, hm_warr_list[yidx+1])
 
         # Add vm connections
         blk_w = self.place_info.width
