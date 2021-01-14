@@ -27,19 +27,19 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from typing import Any, Dict, List, Optional, Type, cast
+from typing import Any, Dict, Optional, Type, cast
 
 from pybag.enum import RoundMode, Direction, Orientation
 from pybag.core import Transform, BBox
 
-from bag.typing import TrackType
 from bag.util.immutable import Param
 from bag.design.module import Module
 from bag.layout.routing.base import TrackID, WireArray
-from bag.layout.routing.grid import RoutingGrid
 from bag.layout.template import TemplateDB
 
 from xbase.layout.res.base import ResBasePlaceInfo, ResArrayBase
+
+from bag3_analog.layout.util import translate_layers
 
 from ...schematic.res_termination import bag3_analog__res_termination
 
@@ -314,8 +314,3 @@ class Termination(ResArrayBase):
             vm_warrs.append(self.connect_to_tracks(warr, TrackID(vm_layer, tidx, vm_w)))
         xm_tidx = translate_layers(self.grid, hm_layer, warr.track_id.base_index, xm_layer)
         return self.connect_to_tracks(vm_warrs, TrackID(xm_layer, xm_tidx, xm_w))
-
-
-def translate_layers(grid: RoutingGrid, lay0: int, tidx: TrackType, lay1: int, mode=RoundMode.NEAREST):
-    coord = grid.track_to_coord(lay0, tidx)
-    return grid.coord_to_track(lay1, coord, mode)

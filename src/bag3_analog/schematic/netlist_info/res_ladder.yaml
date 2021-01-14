@@ -5,7 +5,7 @@ bbox:
   - -229
   - -58
   - 130
-  - 110
+  - 298
 terminals:
   BULK:
     obj:
@@ -248,7 +248,87 @@ shapes:
       visible: true
       drafting: true
       text: top
+  -
+    - 5
+    - layer: 228
+      purpose: 4294967295
+      net: bottom
+      points:
+        -
+          - 0
+          - 140
+        -
+          - 0
+          - 180
+  -
+    - 7
+    - layer: 228
+      purpose: 237
+      net: bottom
+      origin:
+        - -7
+        - 176
+      alignment: 8
+      orient: R90
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: bottom
+  -
+    - 5
+    - layer: 228
+      purpose: 4294967295
+      net: bottom
+      points:
+        -
+          - 0
+          - 240
+        -
+          - 0
+          - 280
+  -
+    - 7
+    - layer: 228
+      purpose: 237
+      net: bottom
+      origin:
+        - -7
+        - 244
+      alignment: 2
+      orient: R90
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: bottom
 instances:
+  XMRES:
+    lib_name: BAG_prim
+    cell_name: res_metal_3
+    view_name: symbol
+    xform:
+      - -40
+      - 250
+      - R0
+    bbox:
+      - -132
+      - 176
+      - 94
+      - 250
+    connections:
+      MINUS: bottom
+      PLUS: bottom
+    params:
+      l:
+        - 3
+        - 1u
+      w:
+        - 3
+        - 44n
+    is_primitive: true
   XRES:
     lib_name: BAG_prim
     cell_name: res_standard
@@ -277,10 +357,13 @@ instances:
 props:
   connectivityLastUpdated:
     - 0
-    - 697
+    - 1136
+  instance#:
+    - 0
+    - 1
   lastSchematicExtraction:
     - 4
-    - time_val: 1610594081
+    - time_val: 1610652117
   net#:
     - 0
     - 0
@@ -289,7 +372,7 @@ props:
     - 7
   schGeometryLastUpdated:
     - 0
-    - 697
+    - 1136
   schGeometryVersion:
     - 3
     - sch.ds.gm.1.4
@@ -299,10 +382,10 @@ props:
 app_defs:
   _dbLastSavedCounter:
     - 0
-    - 697
+    - 1136
   _dbvCvTimeStamp:
     - 0
-    - 697
+    - 1136
   cdbRevision:
     - 0
     - 227612

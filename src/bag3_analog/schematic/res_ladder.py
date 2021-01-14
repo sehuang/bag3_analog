@@ -15,7 +15,7 @@
 
 # -*- coding: utf-8 -*-
 
-from typing import Dict, Any
+from typing import Dict, Any, Tuple
 
 import pkg_resources
 from pathlib import Path
@@ -58,11 +58,12 @@ class bag3_analog__res_ladder(Module):
             ny_dum="Number of dummies on each side, Y direction",
             top_vdd='True to make the top connection VDD',
             bot_vss='True to make the bottom connection VSS',
-            sup_name="Supply name to connect to bulk or float"
+            sup_name="Supply name to connect to bulk or float",
+            mres_info="Tuple with width, length, and layer of the mres between VSS and out<0>"
         )
 
     def design(self, w: int, l: int, res_type: str, nx: int, ny, nx_dum: int, ny_dum: int,
-               top_vdd: bool, bot_vss: bool, sup_name: str) -> None:
+               top_vdd: bool, bot_vss: bool, sup_name: str, mres_info: Tuple[int, int, int]) -> None:
 
         nx_core = nx - nx_dum * 2
         ny_core = ny - ny_dum * 2
@@ -82,12 +83,16 @@ class bag3_analog__res_ladder(Module):
                             ('MINUS', f'out<{idx}>'), ('BULK', sup_name)])
                           for idx in range(ncore)]
         self.array_instance('XRESC', inst_term_list=inst_term_list, dx=100)
-        # TODO: metal resistor for VSS - out<0>
 
         # Array the dummies
-        inst_term_list = [(f'XRES_DUM{idx}', [('PLUS', sup_name), ('MINUS', sup_name), ('BULK', sup_name)]) \
-                for idx in range(ndum)]
+        inst_term_list = [(f'XRES_DUM{idx}', [('PLUS', sup_name), ('MINUS', sup_name), ('BULK', sup_name)])
+                          for idx in range(ndum)]
         self.array_instance('XRES_DUM', inst_term_list=inst_term_list, dx=100)
+
+        # Design metal resistors
+        mres_w, mres_l, mres_layer = mres_info
+        self.instances['XMRES'].design(w=mres_w, l=mres_l, layer=mres_layer)
+        self.reconnect_instance('XMRES', [('PLUS', 'out<0>'), ('MINUS', 'VSS' if bot_vss else 'bottom')])
 
         # Rename out
         self.rename_pin('out', f'out<{ncore - 1}:0>')
