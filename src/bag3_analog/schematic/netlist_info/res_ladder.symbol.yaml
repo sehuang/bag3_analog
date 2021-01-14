@@ -1,0 +1,302 @@
+lib_name: bag3_analog
+cell_name: res_ladder
+view_name: symbol
+bbox:
+  - 40
+  - -4
+  - 164
+  - 324
+terminals:
+  BULK:
+    obj:
+      - 0
+      - layer: 229
+        purpose: 4294967295
+        net: ""
+        bbox:
+          - 156
+          - 86
+          - 164
+          - 94
+    stype: 0
+    ttype: 2
+  bottom:
+    obj:
+      - 0
+      - layer: 229
+        purpose: 4294967295
+        net: ""
+        bbox:
+          - 76
+          - -4
+          - 84
+          - 4
+    stype: 0
+    ttype: 2
+  out:
+    obj:
+      - 0
+      - layer: 229
+        purpose: 4294967295
+        net: ""
+        bbox:
+          - 156
+          - 186
+          - 164
+          - 194
+    stype: 0
+    ttype: 2
+  top:
+    obj:
+      - 0
+      - layer: 229
+        purpose: 4294967295
+        net: ""
+        bbox:
+          - 76
+          - 316
+          - 84
+          - 324
+    stype: 0
+    ttype: 2
+shapes:
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 80
+          - 270
+        -
+          - 70
+          - 260
+        -
+          - 90
+          - 250
+        -
+          - 80
+          - 240
+  -
+    - 0
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      bbox:
+        - 40
+        - 40
+        - 120
+        - 280
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 80
+          - 320
+        -
+          - 80
+          - 270
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 80
+          - 40
+        -
+          - 80
+          - 0
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 120
+          - 90
+        -
+          - 160
+          - 90
+  -
+    - 7
+    - layer: 229
+      purpose: 237
+      net: ""
+      origin:
+        - 70
+        - 321
+      alignment: 7
+      orient: R90
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: top
+  -
+    - 7
+    - layer: 229
+      purpose: 237
+      net: ""
+      origin:
+        - 70
+        - 51
+      alignment: 7
+      orient: R90
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: bottom
+  -
+    - 7
+    - layer: 229
+      purpose: 237
+      net: ""
+      origin:
+        - 161
+        - 100
+      alignment: 7
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: BULK
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 80
+          - 240
+        -
+          - 80
+          - 210
+        -
+          - 70
+          - 200
+        -
+          - 90
+          - 190
+        -
+          - 80
+          - 180
+        -
+          - 80
+          - 150
+        -
+          - 70
+          - 140
+        -
+          - 90
+          - 130
+        -
+          - 80
+          - 120
+        -
+          - 80
+          - 90
+        -
+          - 70
+          - 80
+        -
+          - 90
+          - 70
+        -
+          - 80
+          - 60
+        -
+          - 80
+          - 40
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 80
+          - 230
+        -
+          - 120
+          - 230
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 80
+          - 170
+        -
+          - 120
+          - 170
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 80
+          - 110
+        -
+          - 120
+          - 110
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 120
+          - 190
+        -
+          - 160
+          - 190
+  -
+    - 7
+    - layer: 229
+      purpose: 237
+      net: ""
+      origin:
+        - 151
+        - 200
+      alignment: 7
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: out
+instances:
+  {}
+props:
+  pin#:
+    - 0
+    - 4
+app_defs:
+  _dbLastSavedCounter:
+    - 0
+    - 155
+  _dbvCvTimeStamp:
+    - 0
+    - 155
+  cdbRevision:
+    - 0
+    - 227612
