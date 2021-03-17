@@ -33,7 +33,7 @@
 """This module defines various passive high-pass filter generators
 """
 
-from typing import Dict, Set, Any, cast, List, Optional
+from typing import Dict, Set, Any, cast, List, Optional, Tuple
 
 import numbers  # TODO:???
 
@@ -156,23 +156,20 @@ class HighPassDiffCore(ResArrayBase):
 
         # Draw resistor
         self.draw_base(pinfo)
+        conn_layer = self.conn_layer
+        vm_layer = conn_layer + 1
+        xm_layer = vm_layer + 1
 
         # connect resistors
         vdd, biasp, biasn, outp_h, outn_h, xl, xr = self.connect_resistors(bias_idx)
         # draw MOM cap
         nser = self.place_info.nx // 2 - self.params['nx_dum']
         caplp, capln, caprp, caprn = self.draw_mom_cap(nser, xl, xr, cap_spx, cap_spy, cap_margin)
+        # connect resistors to MOM cap
+        self.connect_to_track_wires(outp_h, capln)
+        self.connect_to_track_wires(outn_h, caprn)
 
-        # connect resistors to MOM cap, and draw metal resistors
-        vm_layer = 3  # TODO: fix
-        # self.connect_to_tracks(outp_h, capln.track_id)
-        # self.connect_to_tracks(outn_h, caprn.track_id)
-        conn_lp = self.tech_cls.tech_info.get_lay_purp_list(self.place_info.conn_layer)[0]
-        self.connect_bbox_to_track_wires(Direction.LOWER, conn_lp, outp_h, capln)
-        self.connect_bbox_to_track_wires(Direction.LOWER, conn_lp, outn_h, caprn)
-
-        # connect outputs to horizontal tracks
-        xm_layer = vm_layer + 1
+        # connect outputs to horizontal tracks and draw metal resistors
         # TODO: need a better defn for this
         pidx, nidx, tr_w = in_tr_info
         inp, inn = self.connect_differential_tracks(caplp, caprp, xm_layer, pidx, nidx, width=tr_w)
@@ -224,10 +221,16 @@ class HighPassDiffCore(ResArrayBase):
             cap_val=self.params['cap_val']
         )
 
-    def connect_resistors(self, bias_idx):
+    def connect_resistors(self, bias_idx) -> Tuple[WireArray, WireArray, WireArray, WireArray, WireArray, int, int]:
         """Connect the resistors in series. bias_idx sets which track to draw the vm bias wire on"""
         nx = self._info.nx
         nx_dum = self.params['nx_dum']
+        conn_layer = self.place_info.conn_layer
+        vm_layer = self.place_info.conn_layer + 1
+        tr_w_conn = self.tr_manager.get_width(conn_layer, 'mid')  # TODO: width
+        w_sup_vm = self.tr_manager.get_width(vm_layer, 'sup')
+        prim_lay_purp = self.tech_cls.tech_info.get_lay_purp_list(conn_layer - 1)[0]
+
         biasp = []
         biasn = []
         outp = outn = None
@@ -237,6 +240,7 @@ class HighPassDiffCore(ResArrayBase):
             biasp.extend(self.get_res_ports(0, idx))
             biasn.extend(self.get_res_ports(0, nx - 1 - idx))
 
+        # Snake together the resistors in series
         for idx in range(nx_dum, nx // 2):
             cpl = self.get_res_ports(0, idx)
             cpr = self.get_res_ports(0, nx - 1 - idx)
@@ -250,42 +254,72 @@ class HighPassDiffCore(ResArrayBase):
                 # Get the centermost as the out terminals
                 outp = cpl[conn_par]
                 outn = cpr[conn_par]
+                if isinstance(outp, WireArray):
+                    assert outp.layer_id == conn_layer, \
+                            "If the port is a warr, we expect it to be at conn_layer. Otherwise, primitive"
+                else:
+                    # Bring up to conn layer, as WireArrays
+                    tidx = self.grid.coord_to_track(conn_layer, outp.ym, mode=RoundMode.NEAREST)
+                    outp = self.connect_bbox_to_tracks(Direction.LOWER, prim_lay_purp, outp,
+                                                       TrackID(conn_layer, tidx, tr_w_conn))
+                    tidx = self.grid.coord_to_track(conn_layer, outn.ym, mode=RoundMode.NEAREST)
+                    outn = self.connect_bbox_to_tracks(Direction.LOWER, prim_lay_purp, outn,
+                                                       TrackID(conn_layer, tidx, tr_w_conn))
             else:
                 # Snake together the resistors in series
+                # Assume the upper ports are all aligned vertically, as are the lower powers
                 npl = self.get_res_ports(0, idx + 1)
                 npr = self.get_res_ports(0, nx - 2 - idx)
                 # Code for handling either BBox or WireArray
                 if isinstance(npl[conn_par], WireArray):
-                    self.connect_wires([npl[conn_par], cpl[conn_par]])
-                    self.connect_wires([npr[conn_par], cpr[conn_par]])
+                    if npl[conn_par].layer_id == conn_layer:
+                        self.connect_wires([npl[conn_par], cpl[conn_par]])
+                        self.connect_wires([npr[conn_par], cpr[conn_par]])
+                    else:
+                        # TODO: add code to connect lower layers up
+                        raise RuntimeError("Not supported yet")
                 else:
-                    # if we have BBox's then we need to merge
-                    port_lp = self.tech_cls.tech_info.get_lay_purp_list(self.place_info.conn_layer)[0]
-                    # TODO: add vias down
-                    self.add_rect(port_lp, npl[conn_par].get_merge(cpl[conn_par]))
-                    self.add_rect(port_lp, npr[conn_par].get_merge(cpr[conn_par]))
+                    pairs = [(npl[conn_par], cpl[conn_par]), (npr[conn_par], cpr[conn_par])]
+                    for np, cp in pairs:
+                        # Get a track to connect the ports
+                        tidx = self.grid.coord_to_track(conn_layer, np.ym, mode=RoundMode.NEAREST)
+                        assert tidx == self.grid.coord_to_track(
+                            conn_layer, cp.ym, mode=RoundMode.NEAREST), "Expected tracks to align"
+
+                        # Connect ports to track
+                        tid = TrackID(conn_layer, tidx, tr_w_conn)
+                        warr1 = self.connect_bbox_to_tracks(Direction.LOWER, prim_lay_purp, np, tid)
+                        warr2 = self.connect_bbox_to_tracks(Direction.LOWER, prim_lay_purp, cp, tid)
+                        self.connect_wires([warr1, warr2])
 
         # connect bias wires to vertical tracks
-        vm_layer = self.place_info.conn_layer + 1
-        t0 = self.grid.find_next_track(vm_layer, self.bound_box.xl, half_track=True,
-                                       mode=RoundMode.GREATER_EQ)
-        t1 = self.grid.find_next_track(vm_layer, self.bound_box.xh, half_track=True,
-                                       mode=RoundMode.LESS_EQ)
-        bp_tid = TrackID(vm_layer, t0 + bias_idx + 1)
-        bn_tid = TrackID(vm_layer, t1 - bias_idx - 1)
+        t0 = self.grid.find_next_track(vm_layer, self.bound_box.xl, half_track=True, mode=RoundMode.GREATER_EQ)
+        t1 = self.grid.find_next_track(vm_layer, self.bound_box.xh, half_track=True, mode=RoundMode.LESS_EQ)
+        bp_tid = TrackID(vm_layer, t0 + bias_idx + 1, w_sup_vm)
+        bn_tid = TrackID(vm_layer, t1 - bias_idx - 1, w_sup_vm)
         if isinstance(biasp[0], WireArray):
+            assert biasp[0].layer_id == conn_layer, \
+                "If the port is a warr, we expect it to be at conn_layer. Otherwise, primitive"
             biasp = self.connect_wires(biasp)
             biasn = self.connect_wires(biasn)
             biasp = self.connect_to_tracks(biasp, bp_tid)
             biasn = self.connect_to_tracks(biasn, bn_tid)
         else:
-            port_lp = self.tech_cls.tech_info.get_lay_purp_list(self.place_info.conn_layer)[0]
-            bp_vm = [self.connect_bbox_to_tracks(Direction.LOWER, port_lp, bp, bp_tid) for bp in biasp]
-            bn_vm = [self.connect_bbox_to_tracks(Direction.LOWER, port_lp, bn, bn_tid) for bn in biasn]
-            biasp = self.connect_wires(bp_vm)[0]
-            biasn = self.connect_wires(bn_vm)[0]
+            # Find track ids in the middle of the ports and connect up to conn_layer
+            # Since P and N refer to L/R, we need to separately handle T/B.
+            ptidx_list = [self.grid.coord_to_track(conn_layer, bp.ym, mode=RoundMode.NEAREST) for bp in biasp]
+            ntidx_list = [self.grid.coord_to_track(conn_layer, bn.ym, mode=RoundMode.NEAREST) for bn in biasn]
+            bp_hm = [self.connect_bbox_to_tracks(
+                Direction.LOWER, prim_lay_purp, bp, TrackID(conn_layer, ptidx, tr_w_conn))
+                for ptidx, bp in zip(ptidx_list, biasp)]
+            bn_hm = [self.connect_bbox_to_tracks(
+                Direction.LOWER, prim_lay_purp, bn, TrackID(conn_layer, ntidx, tr_w_conn))
+                for ntidx, bn in zip(ntidx_list, biasn)]
+            # Connect up to vm_layer
+            biasp = self.connect_to_tracks(bp_hm, bp_tid)
+            biasn = self.connect_to_tracks(bn_hm, bn_tid)
 
-        vdd = self.add_wires(vm_layer, t0, biasp.lower, biasp.upper, num=2, pitch=t1 - t0)
+        vdd = self.add_wires(vm_layer, t0, biasp.lower, biasp.upper, num=2, pitch=t1 - t0, width=w_sup_vm)
         xl = self.grid.get_wire_bounds(vm_layer, t0 + 2)[1]
         xr = self.grid.get_wire_bounds(vm_layer, t1 - 2)[0]
 
