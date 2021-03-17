@@ -159,6 +159,7 @@ class HighPassDiffCore(ResArrayBase):
         conn_layer = self.conn_layer
         vm_layer = conn_layer + 1
         xm_layer = vm_layer + 1
+        prim_lay_purp = self.tech_cls.tech_info.get_lay_purp_list(conn_layer - 1)[0]
 
         # connect resistors
         vdd, biasp, biasn, outp_h, outn_h, xl, xr = self.connect_resistors(bias_idx)
@@ -193,14 +194,31 @@ class HighPassDiffCore(ResArrayBase):
                               width=tr_w)
         outn = self.add_wires(xm_layer, nidx, tr_upper + res_out_w, tr_upper + 2 * res_out_w,
                               width=tr_w)
+
+        # Draw substrate connects at edges
+        # TODO: if we don't have substrate taps we need to bias elsewhere?
+        if self.has_substrate_port:
+            # Connect to conn layer at edges
+            conn_tidx_l = self.grid.coord_to_track(conn_layer, self.bound_box.yl, mode=RoundMode.GREATER_EQ)
+            conn_tidx_h = self.grid.coord_to_track(conn_layer, self.bound_box.yh, mode=RoundMode.LESS_EQ)
+            conn_tid_l = TrackID(conn_layer, conn_tidx_l)
+            conn_tid_h = TrackID(conn_layer, conn_tidx_h)
+            sub_conn = []
+            for xidx in range(self.nx):
+                port = self.get_device_port(xidx, 0, "BULK")
+                sub_conn.append(self.connect_bbox_to_tracks(Direction.LOWER, prim_lay_purp, port, conn_tid_l))
+                sub_conn.append(self.connect_bbox_to_tracks(Direction.LOWER, prim_lay_purp, port, conn_tid_h))
+            self.connect_to_track_wires(sub_conn, vdd)
+
         # connect/export vdd
-        if vdd_tr_info is None:
-            self.add_pin('VDD_vm', vdd, label='VDD:', show=show_pins)
+        # TODO: what if the substrate is not VDD?
+        if not vdd_tr_info:
+            self.add_pin('VDD_vm', vdd, label='VDD', show=show_pins, connect=True)
         else:
-            self.add_pin('VDD_vm', vdd, label='VDD', show=show_pins)
+            self.add_pin('VDD_vm', vdd, label='VDD', show=False)
             for tr_info in vdd_tr_info:
                 tid = TrackID(xm_layer, tr_info[0], width=tr_info[1])
-                self.add_pin('VDD', self.connect_to_tracks(vdd, tid), show=show_pins)
+                self.add_pin('VDD', self.connect_to_tracks(vdd, tid), show=show_pins, connect=True)
 
         # add pins
         self.add_pin('biasp', biasp, show=show_pins)
@@ -218,6 +236,7 @@ class HighPassDiffCore(ResArrayBase):
             ndum=self.params['nx_dum'],
             res_in_info=(xm_layer, res_in_w, res_in_w),
             res_out_info=(xm_layer, res_out_w, res_out_w),
+            is_differential=True,
             cap_val=self.params['cap_val']
         )
 

@@ -79,8 +79,8 @@ class bag3_analog__high_pass(Module):
         if not is_differential:
             # TODO: add differential option
             raise RuntimeError("Currently only supporting differential HPF")
-        name_info = (('XCAPP', 'XRESP', 'inp', 'outp', 'biasp'),
-                     ('XCAPN', 'XRESN', 'inn', 'outn', 'biasn'))
+        name_info = (('XCAPP', 'XRESP', 'inp', 'midp', 'biasp'),
+                     ('XCAPN', 'XRESN', 'inn', 'midn', 'biasn'))
 
         # Design resistors
         for info_tuple in name_info:
@@ -88,20 +88,22 @@ class bag3_analog__high_pass(Module):
             out_name = info_tuple[-2]
             self.instances[res_name].design(l=l, w=w, intent=intent)
             term_list = [(res_name + f'{x}',
-                         [('PLUS', out_name if x == 0 else f'{out_name}{x-1}'),
-                          ('MINUS', info_tuple[-1] if x == nser - 1 else f'{out_name}{x}'), ('BULK', sub_name)])
+                         [('PLUS', out_name if x == 0 else f'{out_name}_{x-1}'),
+                          ('MINUS', info_tuple[-1] if x == nser - 1 else f'{out_name}_{x}'), ('BULK', sub_name)])
                          for x in range(nser)]
             self.array_instance(res_name, inst_term_list=term_list, dx=100, dy=0)
 
         # Design dummy resistors
-        if not ndum:
-            self.remove_instance('XRESD')
-        else:
-            self.instances['XRESD'].design(l=l, w=w, intent=intent)
-            term_list = [('XRESD' + f'{x}',
-                          [('PLUS', sub_name), ('MINUS', sub_name), ('BULK', sub_name)])
-                         for x in range(ndum)]
-            self.array_instance('XRESD', inst_term_list=term_list, dx=100, dy=0)
+        dummy_info = [('XRESPD', 'biasp'),('XRESND', 'biasn')]
+        for name, bias in dummy_info:
+            if not ndum:
+                self.remove_instance(name)
+            else:
+                self.instances[name].design(l=l, w=w, intent=intent)
+                term_list = [(f'{name}{x}',
+                              [('PLUS', bias), ('MINUS', bias), ('BULK', sub_name)])
+                             for x in range(ndum)]
+                self.array_instance(name, inst_term_list=term_list, dx=100, dy=0)
 
         # Design capacitors
         if extracted:
