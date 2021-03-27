@@ -15,7 +15,7 @@
 
 # -*- coding: utf-8 -*-
 
-from typing import Dict, Any
+from typing import Dict, Any, Tuple
 
 import pkg_resources
 from pathlib import Path
@@ -73,7 +73,7 @@ class bag3_analog__high_pass(Module):
         )
 
     def design(self, l: int, w: int, intent: str, nser: int, ndum: int,
-               res_in_info: Dict, res_out_info: Dict, sub_name: str,
+               res_in_info: Tuple[int, int, int], res_out_info: Tuple[int, int, int], sub_name: str,
                is_differential: bool, cap_val: float, extracted: bool) -> None:
         """"""
         if not is_differential:

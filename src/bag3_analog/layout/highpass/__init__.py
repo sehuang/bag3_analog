@@ -44,7 +44,7 @@ from bag.util.immutable import Param
 from bag.util.search import BinaryIterator
 from bag.design.module import Module
 from bag.layout.util import BBox
-from bag.layout.routing.base import TrackID, TrackManager, WireArray
+from bag.layout.routing.base import TrackID, WireArray
 from bag.layout.template import TemplateDB
 
 from xbase.layout.res.base import ResBasePlaceInfo, ResArrayBase
@@ -62,15 +62,10 @@ class HighPassDiffCore(ResArrayBase):
 
     def __init__(self, temp_db: TemplateDB, params: Param, **kwargs: Any) -> None:
         ResArrayBase.__init__(self, temp_db, params, **kwargs)
-        self._sch_params = None
 
     @classmethod
     def get_schematic_class(cls) -> Optional[Module]:
         return bag3_analog__high_pass
-
-    @property
-    def sch_params(self) -> Dict[str, Any]:
-        return self._sch_params
 
     @classmethod
     def get_params_info(cls) -> Dict[str, str]:
@@ -95,8 +90,7 @@ class HighPassDiffCore(ResArrayBase):
         )
 
     @classmethod
-    def get_default_param_values(cls):
-        # type: () -> Dict[str, Any]
+    def get_default_param_values(cls) -> Dict[str, Any]:
         return dict(
             cap_val=1e-9,
             # bias_idx=0,
@@ -171,7 +165,7 @@ class HighPassDiffCore(ResArrayBase):
         self.connect_to_track_wires(outn_h, caprn)
 
         # connect outputs to horizontal tracks and draw metal resistors
-        # TODO: need a better defn for this
+        # TODO: Metal resistors should not have the same size
         pidx, nidx, tr_w = in_tr_info
         inp, inn = self.connect_differential_tracks(caplp, caprp, xm_layer, pidx, nidx, width=tr_w)
         _res_w_l, _res_w_h = self.grid.get_wire_bounds(xm_layer, pidx, tr_w)
