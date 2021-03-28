@@ -35,8 +35,6 @@
 
 from typing import Dict, Set, Any, cast, List, Optional, Tuple
 
-import numbers  # TODO:???
-
 from pybag.enum import RoundMode, Direction, Orientation
 from pybag.core import Transform, BBox
 
@@ -48,9 +46,6 @@ from bag.layout.routing.base import TrackID, WireArray
 from bag.layout.template import TemplateDB
 
 from xbase.layout.res.base import ResBasePlaceInfo, ResArrayBase
-
-# TODO: do we need this?
-from xbase.layout.array.top import ArrayBaseWrapper
 
 from ...schematic.high_pass import bag3_analog__high_pass
 
@@ -155,38 +150,43 @@ class HighPassDiffCore(ResArrayBase):
         xm_layer = vm_layer + 1
         prim_lay_purp = self.tech_cls.tech_info.get_lay_purp_list(conn_layer - 1)[0]
 
+        assert self.top_layer % 2 == 0, "Top layer must be even"
+
         # connect resistors
         vdd, biasp, biasn, outp_h, outn_h, xl, xr = self.connect_resistors(bias_idx)
         # draw MOM cap
         nser = self.place_info.nx // 2 - self.params['nx_dum']
-        caplp, capln, caprp, caprn = self.draw_mom_cap(nser, xl, xr, cap_spx, cap_spy, cap_margin)
-        # connect resistors to MOM cap
-        self.connect_to_track_wires(outp_h, capln)
-        self.connect_to_track_wires(outn_h, caprn)
+        tmp = self.draw_mom_cap(nser, xl, xr, cap_spx, cap_spy, cap_margin)
+        caplp, capln, caprp, caprn, caplvm, caprvm = tmp
+        # Connect caps to resistors
+        self.connect_to_track_wires(outp_h, caplvm)
+        self.connect_to_track_wires(outn_h, caprvm)
 
         # connect outputs to horizontal tracks and draw metal resistors
+        pin_layer = caplp.layer_id + 1
+        assert pin_layer == self.top_layer
         # TODO: Metal resistors should not have the same size
         pidx, nidx, tr_w = in_tr_info
-        inp, inn = self.connect_differential_tracks(caplp, caprp, xm_layer, pidx, nidx, width=tr_w)
-        _res_w_l, _res_w_h = self.grid.get_wire_bounds(xm_layer, pidx, tr_w)
+        inp, inn = self.connect_differential_tracks(caplp, caprp, pin_layer, pidx, nidx, width=tr_w)
+        _res_w_l, _res_w_h = self.grid.get_wire_bounds(pin_layer, pidx, tr_w)
         res_in_w = _res_w_h - _res_w_l
         tr_lower, tr_upper = inp.lower, inp.upper
-        self.add_res_metal_warr(xm_layer, pidx, tr_lower - res_in_w, tr_lower, width=tr_w)
-        self.add_res_metal_warr(xm_layer, nidx, tr_lower - res_in_w, tr_lower, width=tr_w)
-        inp = self.add_wires(xm_layer, pidx, tr_lower - 2 * res_in_w, tr_lower - res_in_w, width=tr_w)
-        inn = self.add_wires(xm_layer, nidx, tr_lower - 2 * res_in_w, tr_lower - res_in_w, width=tr_w)
+        self.add_res_metal_warr(pin_layer, pidx, tr_lower - res_in_w, tr_lower, width=tr_w)
+        self.add_res_metal_warr(pin_layer, nidx, tr_lower - res_in_w, tr_lower, width=tr_w)
+        inp = self.add_wires(pin_layer, pidx, tr_lower - 2 * res_in_w, tr_lower - res_in_w, width=tr_w)
+        inn = self.add_wires(pin_layer, nidx, tr_lower - 2 * res_in_w, tr_lower - res_in_w, width=tr_w)
 
         pidx, nidx, tr_w = out_tr_info
-        outp, outn = self.connect_differential_tracks(capln, caprn, xm_layer, pidx, nidx, track_lower=tr_lower,
+        outp, outn = self.connect_differential_tracks(capln, caprn, pin_layer, pidx, nidx, track_lower=tr_lower,
                                                       track_upper=tr_upper, width=tr_w)
-        _res_w_l, _res_w_h = self.grid.get_wire_bounds(xm_layer, pidx, tr_w)
+        _res_w_l, _res_w_h = self.grid.get_wire_bounds(pin_layer, pidx, tr_w)
         res_out_w = _res_w_h - _res_w_l
         tr_lower, tr_upper = outp.lower, outp.upper
-        self.add_res_metal_warr(xm_layer, pidx, tr_upper, tr_upper + res_out_w, width=tr_w)
-        self.add_res_metal_warr(xm_layer, nidx, tr_upper, tr_upper + res_out_w, width=tr_w)
-        outp = self.add_wires(xm_layer, pidx, tr_upper + res_out_w, tr_upper + 2 * res_out_w,
+        self.add_res_metal_warr(pin_layer, pidx, tr_upper, tr_upper + res_out_w, width=tr_w)
+        self.add_res_metal_warr(pin_layer, nidx, tr_upper, tr_upper + res_out_w, width=tr_w)
+        outp = self.add_wires(pin_layer, pidx, tr_upper + res_out_w, tr_upper + 2 * res_out_w,
                               width=tr_w)
-        outn = self.add_wires(xm_layer, nidx, tr_upper + res_out_w, tr_upper + 2 * res_out_w,
+        outn = self.add_wires(pin_layer, nidx, tr_upper + res_out_w, tr_upper + 2 * res_out_w,
                               width=tr_w)
 
         # Draw substrate connects at edges
@@ -228,8 +228,8 @@ class HighPassDiffCore(ResArrayBase):
             intent=res_type,
             nser=nser,
             ndum=self.params['nx_dum'],
-            res_in_info=(xm_layer, res_in_w, res_in_w),
-            res_out_info=(xm_layer, res_out_w, res_out_w),
+            res_in_info=(pin_layer, res_in_w, res_in_w),
+            res_out_info=(pin_layer, res_out_w, res_out_w),
             is_differential=True,
             cap_val=self.params['cap_val']
         )
@@ -338,7 +338,8 @@ class HighPassDiffCore(ResArrayBase):
 
         return vdd, biasp, biasn, outp, outn, xl, xr
 
-    def draw_mom_cap(self, nser, xl, xr, cap_spx, cap_spy, cap_margin):
+    def draw_mom_cap(self, nser, xl, xr, cap_spx, cap_spy, cap_margin
+                     ) -> Tuple[WireArray, WireArray, WireArray, WireArray, WireArray, WireArray]:
         # get port location
         bot_pin, top_pin = self.get_res_ports(0, 0)
         if isinstance(bot_pin, BBox):
@@ -355,11 +356,9 @@ class HighPassDiffCore(ResArrayBase):
 
         # draw MOM cap
         xc = bnd_box.xm
-        num_layer = 2
-        # TODO: fix
-        bot_layer = self.tech_cls.tech_info.bot_layer + 1  # Shrug
-        top_layer = bot_layer + num_layer - 1
-        # top_layer = 3
+        bot_layer = self.place_info.conn_layer
+        top_layer = self.place_info.top_layer - 1
+        num_layer = top_layer - bot_layer + 1
         # set bottom parity based on number of resistors to avoid via-to-via spacing errors
         if nser % 2 == 0:
             bot_par_list = [True, False, True]
@@ -373,165 +372,60 @@ class HighPassDiffCore(ResArrayBase):
         cap_xr_list = [xc - cap_spx2, xr - cap_margin]
 
         rects = []
-        capp_list, capn_list = [], []
+        capp_list, capn_list, capr_list = [], [], []
 
         # TODO: clean port flipping code
         port_parity = {top_layer: False}
+        if top_layer != bot_layer + 1:
+            port_parity[bot_layer + 1] = False
         for cap_xl, cap_xr in zip(cap_xl_list, cap_xr_list):
-            curp_list, curn_list = [], []
+            curp_list, curn_list, curr_list = [], [], []
             for idx, (cap_yb, cap_yt, bot_par) in enumerate(zip(cap_yb_list, cap_yt_list,
                                                                 bot_par_list)):
-                port_parity[bot_layer] = bot_par
+                for layer in range(bot_layer, top_layer):
+                    if (layer - bot_layer)  % 2 == 0:
+                        port_parity[layer] = bot_par
                 cap_box = BBox(cap_xl, cap_yb, cap_xr, cap_yt)
                 try:
                     if idx == 1:
                         ports = self.add_mom_cap(cap_box, bot_layer, num_layer,
-                                                            port_plow=port_parity,
-                                                            cap_wires_list=rects)
+                                                 port_plow=port_parity, cap_wires_list=rects)
                         # rects.extend(cur_rects[-1])
                     else:
                         ports = self.add_mom_cap(cap_box, bot_layer, num_layer, port_plow=port_parity)
                 except ValueError:
                     # This is to catch when we can't fit the momcaps
                     continue
+
+                # Top level ports
                 capp, capn = ports[top_layer]
-                curp_list.append(capp[port_parity[top_layer]])
-                curn_list.append(capn[not port_parity[top_layer]])
+                if len(capp) > 1:
+                    curp_list.append(capp[port_parity[top_layer]])
+                    curn_list.append(capn[not port_parity[top_layer]])
+                else:
+                    curp_list.append(capp[0])
+                    curn_list.append(capn[0])
+                # Connections to the resistors
+                capr = ports[bot_layer + 1][1]
+                if len(capr) > 1:
+                    curr_list.append(capr[not port_parity[bot_layer + 1]])
+                else:
+                    curr_list.append(capr[0])
 
             capp_list.append(curp_list)
             capn_list.append(curn_list)
+            capr_list.append(curr_list)
             port_parity[top_layer] = True
+            port_parity[bot_layer + 1] = True
 
         caplp = self.connect_wires(capp_list[0])[0]
         caprp = self.connect_wires(capp_list[1])[0]
         capln = self.connect_wires(capn_list[0])[0]
         caprn = self.connect_wires(capn_list[1])[0]
+        caplr = self.connect_wires(capr_list[0])[0]
+        caprr = self.connect_wires(capr_list[1])[0]
 
-        # merge cap wires
-        # yb = caplp.lower
-        # yt = caplp.upper
-        # for rect in rects:
-        #     box = BBox(rect.bbox.xl, yb, rect.bbox.xh, yt)
-        #     self.add_rect(rect.layer, box)
-
-        # return ports
-        return caplp, capln, caprp, caprn
-
-
-# class HighPassDiff(SubstrateWrapper):
-#     """A differential RC high-pass filter with substrate contact.
-#
-#     Parameters
-#     ----------
-#     temp_db : TemplateDB
-#         the template database.
-#     lib_name : str
-#         the layout library name.
-#     params : Dict[str, Any]
-#         the parameter values.
-#     used_names : Set[str]
-#         a set of already used cell names.
-#     **kwargs
-#         dictionary of optional parameters.  See documentation of
-#         :class:`bag.layout.template.TemplateBase` for details.
-#     """
-#
-#     def __init__(self, temp_db, lib_name, params, used_names, **kwargs):
-#         # type: (TemplateDB, str, Dict[str, Any], Set[str], **kwargs) -> None
-#         SubstrateWrapper.__init__(self, temp_db, lib_name, params, used_names, **kwargs)
-#
-#     @classmethod
-#     def get_params_info(cls):
-#         # type: () -> Dict[str, str]
-#         return dict(
-#             w='unit resistor width, in meters.',
-#             h_unit='total height, in resolution units.',
-#             sub_w='Substrate width.',
-#             sub_lch='Substrate channel length.',
-#             sub_type='the substrate type.',
-#             threshold='the substrate threshold flavor.',
-#             top_layer='The top layer ID',
-#             nser='number of resistors in series in a branch.',
-#             ndum='number of dummy resistors.',
-#             in_tr_info='Input track info.',
-#             out_tr_info='Output track info.',
-#             bias_idx='Bias port index.',
-#             vdd_tr_info='Supply track info.',
-#             res_type='Resistor intent',
-#             res_options='Configuration dictionary for ResArrayBase.',
-#             cap_spx='Capacitor horizontal separation, in resolution units.',
-#             cap_spy='Capacitor vertical space from resistor ports, in resolution units.',
-#             cap_margin='Capacitor space from edge, in resolution units.',
-#             sub_tr_w='substrate track width in number of tracks.  None for default.',
-#             sub_tids='Substrate contact tr_idx/tr_width tuples.',
-#             end_mode='substrate end mode flag.',
-#             show_pins='True to show pins.',
-#             fill_dummy='True to draw dummy fill.',
-#         )
-#
-#     @classmethod
-#     def get_default_param_values(cls):
-#         # type: () -> Dict[str, Any]
-#         return dict(
-#             bias_idx=0,
-#             vdd_tr_info=None,
-#             res_type='standard',
-#             res_options=None,
-#             cap_spx=0,
-#             cap_spy=0,
-#             cap_margin=0,
-#             sub_tr_w=None,
-#             sub_tids=None,
-#             end_mode=15,
-#             show_pins=True,
-#             fill_dummy=True,
-#         )
-#
-#     def draw_layout(self):
-#         h_unit = self.params['h_unit']
-#         sub_w = self.params['sub_w']
-#         sub_lch = self.params['sub_lch']
-#         sub_type = self.params['sub_type']
-#         threshold = self.params['threshold']
-#         top_layer = self.params['top_layer']
-#         in_tr_info = self.params['in_tr_info']
-#         out_tr_info = self.params['out_tr_info']
-#         vdd_tr_info = self.params['vdd_tr_info']
-#         res_type = self.params['res_type']
-#         sub_tr_w = self.params['sub_tr_w']
-#         sub_tids = self.params['sub_tids']
-#         end_mode = self.params['end_mode']
-#         show_pins = self.params['show_pins']
-#         fill_dummy = self.params['fill_dummy']
-#
-#         # compute substrate contact height, subtract from h_unit
-#         bot_end_mode, top_end_mode = self.get_sub_end_modes(end_mode)
-#         h_subb = self.get_substrate_height(self.grid, top_layer, sub_lch, sub_w, sub_type,
-#                                            threshold, end_mode=bot_end_mode, is_passive=True)
-#         h_subt = self.get_substrate_height(self.grid, top_layer, sub_lch, sub_w, sub_type,
-#                                            threshold, end_mode=top_end_mode, is_passive=True)
-#
-#         hm_layer = ResArrayBase.get_port_layer_id(self.grid.tech_info) + 2
-#         tr_off = self.grid.find_next_track(hm_layer, h_subb, half_track=True, mode=1,
-#                                            unit_mode=True)
-#         params = self.params.copy()
-#         params['h_unit'] = h_unit - h_subb - h_subt
-#         params['in_tr_info'] = (in_tr_info[0] - tr_off, in_tr_info[1] - tr_off, in_tr_info[2])
-#         params['out_tr_info'] = (out_tr_info[0] - tr_off, out_tr_info[1] - tr_off, out_tr_info[2])
-#         if vdd_tr_info is not None:
-#             new_info_list = []
-#             for tr_info in vdd_tr_info:
-#                 new_info_list.append((tr_info[0] - tr_off, tr_info[1]))
-#             params['vdd_tr_info'] = new_info_list
-#         self.draw_layout_helper(HighPassDiffCore, params, sub_lch, sub_w, sub_tr_w, sub_type,
-#                                 threshold, show_pins, end_mode=end_mode, is_passive=True,
-#                                 sub_tids=sub_tids, res_type=res_type)
-#
-#         # do max space fill
-#         if fill_dummy:
-#             for lay_id in range(1, hm_layer - 1):
-#                 self.do_max_space_fill(lay_id, fill_pitch=1)
-#         self.fill_box = self.bound_box
+        return caplp, capln, caprp, caprn, caplr, caprr
 
 
 def merge_all_bboxes(lb: List[BBox]):
