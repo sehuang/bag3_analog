@@ -52,7 +52,6 @@ class Termination(ResArrayBase):
     Use export_mid to use as a differential termination
 
     Assumption
-    - conn layer is a x-direction layer
     - Top layer is an even layer
 
     TODO: make the series / parallel direction a parameter.
@@ -81,7 +80,7 @@ class Termination(ResArrayBase):
         pinfo = cast(ResBasePlaceInfo, ResBasePlaceInfo.make_place_info(self.grid, self.params['pinfo']))
         self.draw_base(pinfo)
 
-        assert pinfo.top_layer >= pinfo.conn_layer + 2
+        assert pinfo.top_layer >= pinfo.conn_layer + 3
 
         self._draw_main()
         self._draw_supplies()
@@ -110,14 +109,15 @@ class Termination(ResArrayBase):
 
         tr_manager = self.tr_manager
         conn_layer = self.place_info.conn_layer
-        vm_layer = conn_layer + 1
+        hm_layer = conn_layer + 1
+        vm_layer = hm_layer + 1
         xm_layer = vm_layer + 1
         top_layer = self.place_info.top_layer
-        w_sig_hm = tr_manager.get_width(conn_layer, 'sig')
+        w_sig_hm = tr_manager.get_width(hm_layer, 'sig')
         w_sig_vm = tr_manager.get_width(vm_layer, 'sig')
         w_sig_xm = tr_manager.get_width(xm_layer, 'sig')
 
-        prim_lay_purp = self.tech_cls.tech_info.get_lay_purp_list(conn_layer - 1)[0]
+        prim_lay_purp = self.tech_cls.tech_info.get_lay_purp_list(conn_layer)[0]
 
         # Connect array
         conn_wire_list = []
@@ -127,10 +127,10 @@ class Termination(ResArrayBase):
                 x_warrs = []
                 for xidx in range(nx_dum, nx-nx_dum):
                     pport = cast(BBox, self.get_device_port(xidx, yidx, pname))
-                    tidx = self.grid.coord_to_track(conn_layer, pport.ym, RoundMode.NEAREST)
+                    tidx = self.grid.coord_to_track(hm_layer, pport.ym, RoundMode.NEAREST)
                     x_warrs.append(
                         self.connect_bbox_to_tracks(Direction.LOWER, prim_lay_purp, pport,
-                                                    TrackID(conn_layer, tidx, w_sig_hm)))
+                                                    TrackID(hm_layer, tidx, w_sig_hm)))
                 conn_warrs.append(self.connect_wires(x_warrs)[0])  # All wires should be aligned
             # The array alternates MY, so we need to flip the order
             conn_warrs = [conn_warrs[1], conn_warrs[0]] if yidx % 2 else conn_warrs
@@ -191,12 +191,13 @@ class Termination(ResArrayBase):
 
         tr_manager = self.tr_manager
         conn_layer = self.place_info.conn_layer
-        vm_layer = conn_layer + 1
-        w_sig_hm = tr_manager.get_width(conn_layer, 'sig')
+        hm_layer = conn_layer + 1
+        vm_layer = hm_layer + 1
+        w_sig_hm = tr_manager.get_width(hm_layer, 'sig')
         w_sup_vm = tr_manager.get_width(vm_layer, 'sup')
         w_sig_vm = tr_manager.get_width(vm_layer, 'sig')
         top_layer = self.place_info.top_layer
-        prim_lay_purp = self.tech_cls.tech_info.get_lay_purp_list(conn_layer - 1)[0]
+        prim_lay_purp = self.tech_cls.tech_info.get_lay_purp_list(conn_layer)[0]
 
         # Draw horizontal supply wires
         # Currently BAG3 does not have detailed support for array unit-level wire specs
@@ -209,10 +210,10 @@ class Termination(ResArrayBase):
         xl = self.bound_box.xl
         xh = self.bound_box.xh
         for yidx in range(ny + 1):
-            hm_tidx = self.grid.coord_to_track(conn_layer, blk_h * yidx, RoundMode.NEAREST)
-            hm_tid = TrackID(conn_layer, hm_tidx, tr_manager.get_width(conn_layer, 'sup'))
+            hm_tidx = self.grid.coord_to_track(hm_layer, blk_h * yidx, RoundMode.NEAREST)
+            hm_tid = TrackID(hm_layer, hm_tidx, tr_manager.get_width(hm_layer, 'sup'))
 
-            hm_warr_list.append(self.add_wires(conn_layer, hm_tidx, xl, xh, width=w_sig_hm))
+            hm_warr_list.append(self.add_wires(hm_layer, hm_tidx, xl, xh, width=w_sig_hm))
 
         # Connect dummies to conn layer and to supply straps with vm_layer
         for yidx in range(ny):
@@ -223,16 +224,16 @@ class Termination(ResArrayBase):
                     continue
                 for pname in ('MINUS', 'PLUS'):
                     pport = cast(BBox, self.get_device_port(xidx, yidx, pname))
-                    tidx = self.grid.coord_to_track(conn_layer, pport.ym, RoundMode.NEAREST)
+                    tidx = self.grid.coord_to_track(hm_layer, pport.ym, RoundMode.NEAREST)
                     warr_hm = self.connect_bbox_to_tracks(Direction.LOWER, prim_lay_purp, pport,
-                                                          TrackID(conn_layer, tidx, w_sig_hm))
+                                                          TrackID(hm_layer, tidx, w_sig_hm))
                     sup_hm = hm_warr_list[yidx + 1] if (pname == 'PLUS') ^ plus_down else hm_warr_list[yidx]
 
                     vm_tidx = self.grid.coord_to_track(vm_layer, pport.xm, RoundMode.NEAREST)
                     self.connect_to_tracks([warr_hm, sup_hm], TrackID(vm_layer, vm_tidx, w_sig_vm))
 
         # If we have bulk, connect bulk
-        # Assume that the bulk port is on conn_layer - 1 and can be simply connected
+        # Assume that the bulk port is on conn_layer and can be simply connected
         # to the conn_layer supply lines.
         if self.has_substrate_port:
             # Hack to check port layer assumption
