@@ -1,0 +1,424 @@
+lib_name: bag3_analog
+cell_name: high_pass
+view_name: symbol
+bbox:
+  - -4
+  - -4
+  - 144
+  - 224
+terminals:
+  BULK:
+    obj:
+      - 0
+      - layer: 229
+        purpose: 4294967295
+        net: ""
+        bbox:
+          - 36
+          - -4
+          - 44
+          - 4
+    stype: 1
+    ttype: 2
+  biasn:
+    obj:
+      - 0
+      - layer: 229
+        purpose: 4294967295
+        net: ""
+        bbox:
+          - 96
+          - -4
+          - 104
+          - 4
+    stype: 0
+    ttype: 2
+  biasp:
+    obj:
+      - 0
+      - layer: 229
+        purpose: 4294967295
+        net: ""
+        bbox:
+          - 96
+          - 216
+          - 104
+          - 224
+    stype: 0
+    ttype: 2
+  inn:
+    obj:
+      - 0
+      - layer: 229
+        purpose: 4294967295
+        net: ""
+        bbox:
+          - -4
+          - 76
+          - 4
+          - 84
+    stype: 0
+    ttype: 2
+  inp:
+    obj:
+      - 0
+      - layer: 229
+        purpose: 4294967295
+        net: ""
+        bbox:
+          - -4
+          - 136
+          - 4
+          - 144
+    stype: 0
+    ttype: 2
+  outn:
+    obj:
+      - 0
+      - layer: 229
+        purpose: 4294967295
+        net: ""
+        bbox:
+          - 136
+          - 76
+          - 144
+          - 84
+    stype: 0
+    ttype: 2
+  outp:
+    obj:
+      - 0
+      - layer: 229
+        purpose: 4294967295
+        net: ""
+        bbox:
+          - 136
+          - 136
+          - 144
+          - 144
+    stype: 0
+    ttype: 2
+shapes:
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 0
+          - 0
+        -
+          - 0
+          - 220
+        -
+          - 140
+          - 220
+        -
+          - 140
+          - 0
+        -
+          - 0
+          - 0
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 100
+          - 140
+        -
+          - 100
+          - 160
+        -
+          - 80
+          - 170
+        -
+          - 120
+          - 190
+        -
+          - 100
+          - 200
+        -
+          - 100
+          - 220
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 60
+          - 140
+        -
+          - 140
+          - 140
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 40
+          - 160
+        -
+          - 40
+          - 120
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 60
+          - 160
+        -
+          - 60
+          - 120
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 0
+          - 140
+        -
+          - 40
+          - 140
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 100
+          - 0
+        -
+          - 100
+          - 20
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 100
+          - 20
+        -
+          - 80
+          - 30
+        -
+          - 120
+          - 50
+        -
+          - 100
+          - 60
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 100
+          - 60
+        -
+          - 100
+          - 80
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 100
+          - 80
+        -
+          - 60
+          - 80
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 60
+          - 100
+        -
+          - 60
+          - 60
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 40
+          - 100
+        -
+          - 40
+          - 60
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 0
+          - 80
+        -
+          - 40
+          - 80
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 100
+          - 80
+        -
+          - 140
+          - 80
+  -
+    - 7
+    - layer: 229
+      purpose: 237
+      net: ""
+      origin:
+        - 9
+        - 140
+      alignment: 7
+      orient: MY
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: inp
+  -
+    - 7
+    - layer: 229
+      purpose: 237
+      net: ""
+      origin:
+        - 9
+        - 80
+      alignment: 7
+      orient: MY
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: inn
+  -
+    - 7
+    - layer: 229
+      purpose: 237
+      net: ""
+      origin:
+        - 131
+        - 140
+      alignment: 7
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: outp
+  -
+    - 7
+    - layer: 229
+      purpose: 237
+      net: ""
+      origin:
+        - 131
+        - 80
+      alignment: 7
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: outn
+  -
+    - 7
+    - layer: 229
+      purpose: 237
+      net: ""
+      origin:
+        - 100
+        - 211
+      alignment: 7
+      orient: R90
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: biasp
+  -
+    - 7
+    - layer: 229
+      purpose: 237
+      net: ""
+      origin:
+        - 100
+        - 9
+      alignment: 7
+      orient: MYR90
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: biasn
+  -
+    - 7
+    - layer: 229
+      purpose: 237
+      net: ""
+      origin:
+        - 40
+        - 9
+      alignment: 7
+      orient: MYR90
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: BULK
+instances:
+  {}
+props:
+  pin#:
+    - 0
+    - 7
+app_defs:
+  _dbLastSavedCounter:
+    - 0
+    - 149
+  _dbvCvTimeStamp:
+    - 0
+    - 149
+  cdbRevision:
+    - 0
+    - 227612
