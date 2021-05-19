@@ -49,7 +49,6 @@ class ResLadder(ResArrayBase):
     Resistors are stringed together in a Z-pattern, starting from the top left.
 
     Assumption
-    - conn layer is a x-direction layer
     - Top layer is an even layer
     - Resistors are sized tall enough to fit enough top layer wires
 
@@ -92,7 +91,7 @@ class ResLadder(ResArrayBase):
         self._sup_name = 'VDD' if \
             cast(ResBasePlaceInfo, self.place_info).res_config['sub_type_default'] == 'ntap' else 'VSS'
 
-        assert pinfo.top_layer >= pinfo.conn_layer + 2
+        assert pinfo.top_layer >= pinfo.conn_layer + 3
 
         unit_metal_dict = self._draw_unit_metal()
         full_metal_dict = self._array_metal_and_connect(unit_metal_dict)
@@ -119,22 +118,23 @@ class ResLadder(ResArrayBase):
         """Draws metal wires over a unit cell. Returns all the metal wire arrays"""
         tr_manager = self.tr_manager
         conn_layer = self.place_info.conn_layer
-        vm_layer = conn_layer + 1
-        w_sig_hm = tr_manager.get_width(conn_layer, 'sig')
+        hm_layer = conn_layer + 1
+        vm_layer = hm_layer + 1
+        w_sig_hm = tr_manager.get_width(hm_layer, 'sig')
         w_sig_vm = tr_manager.get_width(vm_layer, 'sig')
 
         # Draw unit cell conn_layer wires
         # conn layer ~ Fit tracks for 1 sup, 3 sig
         # Define lower half
-        lower = self.grid.coord_to_track(conn_layer, 0)
+        lower = self.grid.coord_to_track(hm_layer, 0)
         pport = cast(BBox, self.get_device_port(0, 0, 'MINUS'))
-        upper = self.grid.coord_to_track(conn_layer, pport.ym, RoundMode.LESS_EQ)
-        lower_locs = tr_manager.spread_wires(conn_layer, ['sup', 'sig', 'sig', 'sig'],
+        upper = self.grid.coord_to_track(hm_layer, pport.ym, RoundMode.LESS_EQ)
+        lower_locs = tr_manager.spread_wires(hm_layer, ['sup', 'sig', 'sig', 'sig'],
                                              lower, upper, sp_type=('sup', 'sig'), alignment=1)
-        upper = self.grid.coord_to_track(conn_layer, self.place_info.height)
+        upper = self.grid.coord_to_track(hm_layer, self.place_info.height)
         pport = cast(BBox, self.get_device_port(0, 0, 'PLUS'))
-        lower = self.grid.coord_to_track(conn_layer, pport.ym, RoundMode.GREATER_EQ)
-        upper_locs = tr_manager.spread_wires(conn_layer, ['sig', 'sig', 'sig', 'sup'],
+        lower = self.grid.coord_to_track(hm_layer, pport.ym, RoundMode.GREATER_EQ)
+        upper_locs = tr_manager.spread_wires(hm_layer, ['sig', 'sig', 'sig', 'sup'],
                                              lower, upper, sp_type=('sup', 'sig'), alignment=-1)
         hm_locs = lower_locs + upper_locs
 
@@ -143,12 +143,12 @@ class ResLadder(ResArrayBase):
         vm_locs = tr_manager.spread_wires(vm_layer, ['sup', 'sig', 'sig', 'sig', 'sup'],
                                           lower, upper, sp_type=('sup', 'sig'), alignment=0)
 
-        # Determine x-dimensions for conn_layer
-        ext_x, ext_y = self.grid.get_via_extensions(Direction.LOWER, conn_layer, 1, 1)
+        # Determine x-dimensions for hm_layer
+        ext_x, ext_y = self.grid.get_via_extensions(Direction.LOWER, hm_layer, 1, 1)
         vm_w = self.grid.get_track_info(vm_layer).width
         vm_w2 = vm_w // 2
         ext_x += vm_w2
-        hm_w = self.grid.get_track_info(conn_layer).width
+        hm_w = self.grid.get_track_info(hm_layer).width
         ext_y += hm_w // 2
 
         hm_dims = [
@@ -174,20 +174,20 @@ class ResLadder(ResArrayBase):
 
         vm_dims = [
             (0, self.place_info.height),
-            (self.grid.track_to_coord(conn_layer, hm_locs[1]) - ext_y,
-             self.grid.track_to_coord(conn_layer, hm_locs[-2]) + ext_y),
-            [(self.grid.track_to_coord(conn_layer, hm_locs[-4]) - ext_y - self.place_info.height,
-             self.grid.track_to_coord(conn_layer, hm_locs[3]) + ext_y),
-             (self.grid.track_to_coord(conn_layer, hm_locs[-4]) - ext_y,
-             self.grid.track_to_coord(conn_layer, hm_locs[3]) + ext_y + self.place_info.height)],
-            (self.grid.track_to_coord(conn_layer, hm_locs[1]) - ext_y,
-             self.grid.track_to_coord(conn_layer, hm_locs[-2]) + ext_y),
+            (self.grid.track_to_coord(hm_layer, hm_locs[1]) - ext_y,
+             self.grid.track_to_coord(hm_layer, hm_locs[-2]) + ext_y),
+            [(self.grid.track_to_coord(hm_layer, hm_locs[-4]) - ext_y - self.place_info.height,
+             self.grid.track_to_coord(hm_layer, hm_locs[3]) + ext_y),
+             (self.grid.track_to_coord(hm_layer, hm_locs[-4]) - ext_y,
+             self.grid.track_to_coord(hm_layer, hm_locs[3]) + ext_y + self.place_info.height)],
+            (self.grid.track_to_coord(hm_layer, hm_locs[1]) - ext_y,
+             self.grid.track_to_coord(hm_layer, hm_locs[-2]) + ext_y),
             (0, self.place_info.height),
         ]
 
         # Draw wires
         metal_dict = {}
-        for layer, info in [(conn_layer, zip(hm_locs, hm_dims)), (vm_layer, zip(vm_locs, vm_dims))]:
+        for layer, info in [(hm_layer, zip(hm_locs, hm_dims)), (vm_layer, zip(vm_locs, vm_dims))]:
             layer_metal = []
             lay_w = w_sig_vm if layer == vm_layer else w_sig_hm
             for loc, dims in info:
@@ -214,11 +214,12 @@ class ResLadder(ResArrayBase):
 
         tr_manager = self.tr_manager
         conn_layer = self.place_info.conn_layer
-        vm_layer = conn_layer + 1
-        w_sig_hm = tr_manager.get_width(conn_layer, 'sig')
+        hm_layer = conn_layer + 1
+        vm_layer = hm_layer + 1
+        w_sig_hm = tr_manager.get_width(hm_layer, 'sig')
         w_sig_vm = tr_manager.get_width(vm_layer, 'sig')
 
-        prim_lay_purp = self.tech_cls.tech_info.get_lay_purp_list(conn_layer - 1)[0]
+        prim_lay_purp = self.tech_cls.tech_info.get_lay_purp_list(conn_layer)[0]
 
         full_metal_dict = {}
         for yidx in range(ny):
@@ -250,10 +251,10 @@ class ResLadder(ResArrayBase):
                 # Connect resistors plus and minus
                 pin_l_bbox = self.get_device_port(xidx, yidx, 'PLUS' if yidx % 2 else 'MINUS')
                 self.connect_bbox_to_track_wires(Direction.LOWER, prim_lay_purp, pin_l_bbox,
-                                                 _unit_info[conn_layer][3])
+                                                 _unit_info[hm_layer][3])
                 pin_h_bbox = self.get_device_port(xidx, yidx, 'MINUS' if yidx % 2 else 'PLUS')
                 self.connect_bbox_to_track_wires(Direction.LOWER, prim_lay_purp, pin_h_bbox,
-                                                 _unit_info[conn_layer][-4])
+                                                 _unit_info[hm_layer][-4])
 
         return full_metal_dict
 
@@ -270,7 +271,8 @@ class ResLadder(ResArrayBase):
         ny_core = ny - 2 * ny_dum
 
         conn_layer = self.place_info.conn_layer
-        vm_layer = conn_layer + 1
+        hm_layer = conn_layer + 1
+        vm_layer = hm_layer + 1
 
         # TODO: simplify the logic here
         # Connect from bottom up
@@ -280,40 +282,40 @@ class ResLadder(ResArrayBase):
                 # Avoid using connect warrs. We want to match the wires
                 if xidx == 0:
                     self.draw_vias_on_intersections(
-                        unit_dict[conn_layer][-4 if yidx % 2 else 3],
+                        unit_dict[hm_layer][-4 if yidx % 2 else 3],
                         unit_dict[vm_layer][2])
                     self.draw_vias_on_intersections(
-                        [unit_dict[conn_layer][3 if yidx % 2 else -4],
-                         unit_dict[conn_layer][1 if yidx % 2 else -2][-1]],
+                        [unit_dict[hm_layer][3 if yidx % 2 else -4],
+                         unit_dict[hm_layer][1 if yidx % 2 else -2][-1]],
                         unit_dict[vm_layer][3])
                 elif xidx == nx_core - 1:
                     self.draw_vias_on_intersections(
-                        unit_dict[conn_layer][3 if yidx % 2 else -4],
+                        unit_dict[hm_layer][3 if yidx % 2 else -4],
                         unit_dict[vm_layer][2])
                     self.draw_vias_on_intersections(
-                        unit_dict[conn_layer][-4 if yidx % 2 else 3],
+                        unit_dict[hm_layer][-4 if yidx % 2 else 3],
                         unit_dict[vm_layer][1])
                     self.draw_vias_on_intersections(
-                        unit_dict[conn_layer][1 if (yidx % 2) ^ (nx_core % 2) else -2],
+                        unit_dict[hm_layer][1 if (yidx % 2) ^ (nx_core % 2) else -2],
                         unit_dict[vm_layer][1])
                 else:
                     if xidx % 2 == 1:
                         self.draw_vias_on_intersections(
-                            [unit_dict[conn_layer][3 if yidx % 2 else -4],
-                             unit_dict[conn_layer][1 if yidx % 2 else -2][0]],
+                            [unit_dict[hm_layer][3 if yidx % 2 else -4],
+                             unit_dict[hm_layer][1 if yidx % 2 else -2][0]],
                             unit_dict[vm_layer][1])
                         self.draw_vias_on_intersections(
-                            [unit_dict[conn_layer][-4 if yidx % 2 else 3],
-                             unit_dict[conn_layer][-2 if yidx % 2 else 1][-1]],
+                            [unit_dict[hm_layer][-4 if yidx % 2 else 3],
+                             unit_dict[hm_layer][-2 if yidx % 2 else 1][-1]],
                             unit_dict[vm_layer][-2])
                     else:
                         self.draw_vias_on_intersections(
-                            [unit_dict[conn_layer][3 if yidx % 2 else -4],
-                             unit_dict[conn_layer][1 if yidx % 2 else -2][-1]],
+                            [unit_dict[hm_layer][3 if yidx % 2 else -4],
+                             unit_dict[hm_layer][1 if yidx % 2 else -2][-1]],
                             unit_dict[vm_layer][-2])
                         self.draw_vias_on_intersections(
-                            [unit_dict[conn_layer][-4 if yidx % 2 else 3],
-                             unit_dict[conn_layer][-2 if yidx % 2 else 1][0]],
+                            [unit_dict[hm_layer][-4 if yidx % 2 else 3],
+                             unit_dict[hm_layer][-2 if yidx % 2 else 1][0]],
                             unit_dict[vm_layer][1])
 
     def _connect_dummies(self,
@@ -328,7 +330,8 @@ class ResLadder(ResArrayBase):
         ny_core = ny - 2 * ny_dum
 
         conn_layer = self.place_info.conn_layer
-        vm_layer = conn_layer + 1
+        hm_layer = conn_layer + 1
+        vm_layer = hm_layer + 1
 
         # Connect from bottom up
         for yidx in range(ny):
@@ -339,12 +342,12 @@ class ResLadder(ResArrayBase):
                 # Skip the top and bottoms
                 if not (xidx == nx_dum and yidx == ny_dum - 1):
                     self.draw_vias_on_intersections(
-                        [unit_dict[conn_layer][-1], unit_dict[conn_layer][-4]], unit_dict[vm_layer][2])
+                        [unit_dict[hm_layer][-1], unit_dict[hm_layer][-4]], unit_dict[vm_layer][2])
                 if not (yidx == ny - ny_dum and xidx == (nx - nx_dum - 1 if ny_core % 2 else nx_dum)):
                     self.draw_vias_on_intersections(
-                        [unit_dict[conn_layer][0], unit_dict[conn_layer][3]], unit_dict[vm_layer][2])
+                        [unit_dict[hm_layer][0], unit_dict[hm_layer][3]], unit_dict[vm_layer][2])
                 self.draw_vias_on_intersections(
-                    [unit_dict[conn_layer][3], unit_dict[conn_layer][-4]],
+                    [unit_dict[hm_layer][3], unit_dict[hm_layer][-4]],
                     [unit_dict[vm_layer][1], unit_dict[vm_layer][-2]])
 
     def _connect_supplies_and_substrate(
@@ -355,13 +358,14 @@ class ResLadder(ResArrayBase):
 
         tr_manager = self.tr_manager
         conn_layer = self.place_info.conn_layer
-        vm_layer = conn_layer + 1
+        hm_layer = conn_layer + 1
+        vm_layer = hm_layer + 1
         xm_layer = vm_layer + 1
         w_sup_xm = tr_manager.get_width(xm_layer, 'sup')
-        prim_lay_purp = self.tech_cls.tech_info.get_lay_purp_list(conn_layer - 1)[0]
+        prim_lay_purp = self.tech_cls.tech_info.get_lay_purp_list(conn_layer)[0]
 
         # If we have bulk, connect bulk
-        # Assume that the bulk port is on conn_layer - 1 and can be simply connected
+        # Assume that the bulk port is on conn_layer and can be simply connected
         # to the conn_layer supply lines.
         if self.has_substrate_port:
             # Hack to check port layer assumption
@@ -371,7 +375,7 @@ class ResLadder(ResArrayBase):
             bulk_bbox_list = self._unit.get_port('BULK').get_pins()
             for yidx in range(ny):
                 for xidx in range(nx):
-                    hm_list = full_metal_dict[(xidx, yidx)][conn_layer]
+                    hm_list = full_metal_dict[(xidx, yidx)][hm_layer]
                     for bbox in bulk_bbox_list:
                         bulk_bbox = cast(BBox, bbox).get_transform(self._get_transform(xidx, yidx))
                         self.connect_bbox_to_track_wires(
@@ -379,20 +383,20 @@ class ResLadder(ResArrayBase):
                         self.connect_bbox_to_track_wires(
                             Direction.LOWER, prim_lay_purp, bulk_bbox, hm_list[0])
 
-        # Connect conn_layer supplies to vm_layer supplies
+        # Connect hm_layer supplies to vm_layer supplies
         for yidx in range(ny):
             for xidx in range(nx):
                 unit_dict = full_metal_dict[(xidx, yidx)]
                 self.connect_to_track_wires(
-                    [unit_dict[conn_layer][0], unit_dict[conn_layer][-1]],
+                    [unit_dict[hm_layer][0], unit_dict[hm_layer][-1]],
                     [unit_dict[vm_layer][0], unit_dict[vm_layer][-1]],
                 )
 
         # Connect supplies up to xm_layer
         xm_list = []
         for yidx, wire_idx in [(0, 0), (ny - 1, -1)]:
-            hm_tidx = full_metal_dict[(0, yidx)][conn_layer][wire_idx].track_id.base_index
-            xm_tidx = translate_layers(self.grid, conn_layer, hm_tidx, xm_layer)
+            hm_tidx = full_metal_dict[(0, yidx)][hm_layer][wire_idx].track_id.base_index
+            xm_tidx = translate_layers(self.grid, hm_layer, hm_tidx, xm_layer)
             vm_list = []
             for xidx in range(nx):
                 vm_list.append(full_metal_dict[(xidx, yidx)][vm_layer][0])
@@ -417,7 +421,8 @@ class ResLadder(ResArrayBase):
 
         tr_manager = self.tr_manager
         conn_layer = self.place_info.conn_layer
-        vm_layer = conn_layer + 1
+        hm_layer = conn_layer + 1
+        vm_layer = hm_layer + 1
         xm_layer = vm_layer + 1
         w_sup_xm = tr_manager.get_width(xm_layer, 'sup')
         w_sig_xm = tr_manager.get_width(xm_layer, 'sig')
@@ -427,7 +432,7 @@ class ResLadder(ResArrayBase):
             xidx = nx_core - 1 if yidx % 2 else 0
             unit_info = full_metal_dict[(xidx + nx_dum, yidx + ny_dum)]
             self.draw_vias_on_intersections(
-                unit_info[conn_layer][3], unit_info[vm_layer][-2 if yidx % 2 else 1])
+                unit_info[hm_layer][3], unit_info[vm_layer][-2 if yidx % 2 else 1])
 
         # Draw tap wires
         unit_height = self.place_info.height
@@ -453,24 +458,24 @@ class ResLadder(ResArrayBase):
 
         # Draw top and bottom
         bot_unit_info = full_metal_dict[(nx_dum, ny_dum)]
-        bot_tidx = translate_layers(self.grid, conn_layer,
-                                    bot_unit_info[conn_layer][0].track_id.base_index, xm_layer)
+        bot_tidx = translate_layers(self.grid, hm_layer,
+                                    bot_unit_info[hm_layer][0].track_id.base_index, xm_layer)
         bot_warr = self.connect_to_tracks(
             bot_unit_info[vm_layer][2][0], TrackID(xm_layer, bot_tidx, w_sup_xm), track_lower=lower, track_upper=upper)
         self.add_pin('VSS' if self.params['bot_vss'] else 'bottom', bot_warr, connect=True)
 
         top_unit_info = full_metal_dict[(nx - nx_dum - 1 if ny_core % 2 else nx_dum, ny - ny_dum - 1)]
-        top_tidx = translate_layers(self.grid, conn_layer,
-                                    top_unit_info[conn_layer][-1].track_id.base_index, xm_layer)
+        top_tidx = translate_layers(self.grid, hm_layer,
+                                    top_unit_info[hm_layer][-1].track_id.base_index, xm_layer)
         top_warr = self.connect_to_tracks(
             top_unit_info[vm_layer][2][-1], TrackID(xm_layer, top_tidx, w_sup_xm), track_lower=lower, track_upper=upper)
         self.add_pin('VDD' if self.params['top_vdd'] else 'top', top_warr, connect=True)
 
         # Add metal resistor between bottom and out<0>
         mres_l = self.params['mres_l']
-        hm_w = self.grid.get_track_info(conn_layer).width
+        hm_w = self.grid.get_track_info(hm_layer).width
         vm_w = self.grid.get_track_info(vm_layer).width  # TODO: how to do this when tr_manager width != 1?
-        ext_x, ext_y = self.grid.get_via_extensions(Direction.LOWER, conn_layer, 1, 1)
+        ext_x, ext_y = self.grid.get_via_extensions(Direction.LOWER, hm_layer, 1, 1)
         ref_info = full_metal_dict[(nx_dum, ny_dum)]
         xl = self.grid.track_to_coord(
             vm_layer, ref_info[vm_layer][2][0].track_id.base_index) - vm_w // 2
@@ -481,9 +486,9 @@ class ResLadder(ResArrayBase):
 
         # Add extra conn if appropriate
         if self.params['top_vdd'] and self._sup_name == 'VDD':
-            self.draw_vias_on_intersections(top_unit_info[conn_layer][-1], top_unit_info[vm_layer][2][1])
+            self.draw_vias_on_intersections(top_unit_info[hm_layer][-1], top_unit_info[vm_layer][2][1])
         if self.params['bot_vss'] and self._sup_name == 'VSS':
-            self.draw_vias_on_intersections(bot_unit_info[conn_layer][0], bot_unit_info[vm_layer][2][0])
+            self.draw_vias_on_intersections(bot_unit_info[hm_layer][0], bot_unit_info[vm_layer][2][0])
 
         return vm_w, mres_l, vm_layer
 

@@ -146,9 +146,10 @@ class HighPassDiffCore(ResArrayBase):
         # Draw resistor
         self.draw_base(pinfo)
         conn_layer = self.conn_layer
-        vm_layer = conn_layer + 1
+        hm_layer = conn_layer + 1
+        vm_layer = hm_layer + 1
         xm_layer = vm_layer + 1
-        prim_lay_purp = self.tech_cls.tech_info.get_lay_purp_list(conn_layer - 1)[0]
+        prim_lay_purp = self.tech_cls.tech_info.get_lay_purp_list(conn_layer)[0]
 
         assert self.top_layer % 2 == 0, "Top layer must be even"
 
@@ -193,15 +194,15 @@ class HighPassDiffCore(ResArrayBase):
         # TODO: if we don't have substrate taps we need to bias elsewhere?
         if self.has_substrate_port:
             # Connect to conn layer at edges
-            conn_tidx_l = self.grid.coord_to_track(conn_layer, self.bound_box.yl, mode=RoundMode.GREATER_EQ)
-            conn_tidx_h = self.grid.coord_to_track(conn_layer, self.bound_box.yh, mode=RoundMode.LESS_EQ)
-            conn_tid_l = TrackID(conn_layer, conn_tidx_l)
-            conn_tid_h = TrackID(conn_layer, conn_tidx_h)
+            hm_tidx_l = self.grid.coord_to_track(hm_layer, self.bound_box.yl, mode=RoundMode.GREATER_EQ)
+            hm_tidx_h = self.grid.coord_to_track(hm_layer, self.bound_box.yh, mode=RoundMode.LESS_EQ)
+            hm_tid_l = TrackID(hm_layer, hm_tidx_l)
+            hm_tid_h = TrackID(hm_layer, hm_tidx_h)
             sub_conn = []
             for xidx in range(self.nx):
                 port = self.get_device_port(xidx, 0, "BULK")
-                sub_conn.append(self.connect_bbox_to_tracks(Direction.LOWER, prim_lay_purp, port, conn_tid_l))
-                sub_conn.append(self.connect_bbox_to_tracks(Direction.LOWER, prim_lay_purp, port, conn_tid_h))
+                sub_conn.append(self.connect_bbox_to_tracks(Direction.LOWER, prim_lay_purp, port, hm_tid_l))
+                sub_conn.append(self.connect_bbox_to_tracks(Direction.LOWER, prim_lay_purp, port, hm_tid_h))
             self.connect_to_track_wires(sub_conn, vdd)
 
         # connect/export vdd
@@ -239,10 +240,11 @@ class HighPassDiffCore(ResArrayBase):
         nx = self._info.nx
         nx_dum = self.params['nx_dum']
         conn_layer = self.place_info.conn_layer
-        vm_layer = self.place_info.conn_layer + 1
-        tr_w_conn = self.tr_manager.get_width(conn_layer, 'mid')  # TODO: width
+        hm_layer = conn_layer + 1
+        vm_layer = hm_layer + 1
+        tr_w_hm = self.tr_manager.get_width(hm_layer, 'mid')  # TODO: width
         w_sup_vm = self.tr_manager.get_width(vm_layer, 'sup')
-        prim_lay_purp = self.tech_cls.tech_info.get_lay_purp_list(conn_layer - 1)[0]
+        prim_lay_purp = self.tech_cls.tech_info.get_lay_purp_list(conn_layer)[0]
 
         biasp = []
         biasn = []
@@ -268,16 +270,15 @@ class HighPassDiffCore(ResArrayBase):
                 outp = cpl[conn_par]
                 outn = cpr[conn_par]
                 if isinstance(outp, WireArray):
-                    assert outp.layer_id == conn_layer, \
-                            "If the port is a warr, we expect it to be at conn_layer. Otherwise, primitive"
+                    raise RuntimeError("WireArray primitives currently not support")
                 else:
-                    # Bring up to conn layer, as WireArrays
-                    tidx = self.grid.coord_to_track(conn_layer, outp.ym, mode=RoundMode.NEAREST)
+                    # Bring up to hm_layer, as WireArrays
+                    tidx = self.grid.coord_to_track(hm_layer, outp.ym, mode=RoundMode.NEAREST)
                     outp = self.connect_bbox_to_tracks(Direction.LOWER, prim_lay_purp, outp,
-                                                       TrackID(conn_layer, tidx, tr_w_conn))
-                    tidx = self.grid.coord_to_track(conn_layer, outn.ym, mode=RoundMode.NEAREST)
+                                                       TrackID(hm_layer, tidx, tr_w_hm))
+                    tidx = self.grid.coord_to_track(hm_layer, outn.ym, mode=RoundMode.NEAREST)
                     outn = self.connect_bbox_to_tracks(Direction.LOWER, prim_lay_purp, outn,
-                                                       TrackID(conn_layer, tidx, tr_w_conn))
+                                                       TrackID(hm_layer, tidx, tr_w_hm))
             else:
                 # Snake together the resistors in series
                 # Assume the upper ports are all aligned vertically, as are the lower powers
@@ -295,12 +296,12 @@ class HighPassDiffCore(ResArrayBase):
                     pairs = [(npl[conn_par], cpl[conn_par]), (npr[conn_par], cpr[conn_par])]
                     for np, cp in pairs:
                         # Get a track to connect the ports
-                        tidx = self.grid.coord_to_track(conn_layer, np.ym, mode=RoundMode.NEAREST)
+                        tidx = self.grid.coord_to_track(hm_layer, np.ym, mode=RoundMode.NEAREST)
                         assert tidx == self.grid.coord_to_track(
-                            conn_layer, cp.ym, mode=RoundMode.NEAREST), "Expected tracks to align"
+                            hm_layer, cp.ym, mode=RoundMode.NEAREST), "Expected tracks to align"
 
                         # Connect ports to track
-                        tid = TrackID(conn_layer, tidx, tr_w_conn)
+                        tid = TrackID(hm_layer, tidx, tr_w_hm)
                         warr1 = self.connect_bbox_to_tracks(Direction.LOWER, prim_lay_purp, np, tid)
                         warr2 = self.connect_bbox_to_tracks(Direction.LOWER, prim_lay_purp, cp, tid)
                         self.connect_wires([warr1, warr2])
@@ -311,22 +312,21 @@ class HighPassDiffCore(ResArrayBase):
         bp_tid = TrackID(vm_layer, t0 + bias_idx + 1, w_sup_vm)
         bn_tid = TrackID(vm_layer, t1 - bias_idx - 1, w_sup_vm)
         if isinstance(biasp[0], WireArray):
-            assert biasp[0].layer_id == conn_layer, \
-                "If the port is a warr, we expect it to be at conn_layer. Otherwise, primitive"
-            biasp = self.connect_wires(biasp)
-            biasn = self.connect_wires(biasn)
-            biasp = self.connect_to_tracks(biasp, bp_tid)
-            biasn = self.connect_to_tracks(biasn, bn_tid)
+            raise RuntimeError("Currently not supported")
+            # biasp = self.connect_wires(biasp)
+            # biasn = self.connect_wires(biasn)
+            # biasp = self.connect_to_tracks(biasp, bp_tid)
+            # biasn = self.connect_to_tracks(biasn, bn_tid)
         else:
-            # Find track ids in the middle of the ports and connect up to conn_layer
+            # Find track ids in the middle of the ports and connect up to hm_layer
             # Since P and N refer to L/R, we need to separately handle T/B.
-            ptidx_list = [self.grid.coord_to_track(conn_layer, bp.ym, mode=RoundMode.NEAREST) for bp in biasp]
-            ntidx_list = [self.grid.coord_to_track(conn_layer, bn.ym, mode=RoundMode.NEAREST) for bn in biasn]
+            ptidx_list = [self.grid.coord_to_track(hm_layer, bp.ym, mode=RoundMode.NEAREST) for bp in biasp]
+            ntidx_list = [self.grid.coord_to_track(hm_layer, bn.ym, mode=RoundMode.NEAREST) for bn in biasn]
             bp_hm = [self.connect_bbox_to_tracks(
-                Direction.LOWER, prim_lay_purp, bp, TrackID(conn_layer, ptidx, tr_w_conn))
+                Direction.LOWER, prim_lay_purp, bp, TrackID(hm_layer, ptidx, tr_w_hm))
                 for ptidx, bp in zip(ptidx_list, biasp)]
             bn_hm = [self.connect_bbox_to_tracks(
-                Direction.LOWER, prim_lay_purp, bn, TrackID(conn_layer, ntidx, tr_w_conn))
+                Direction.LOWER, prim_lay_purp, bn, TrackID(hm_layer, ntidx, tr_w_hm))
                 for ntidx, bn in zip(ntidx_list, biasn)]
             # Connect up to vm_layer
             biasp = self.connect_to_tracks(bp_hm, bp_tid)
@@ -356,7 +356,7 @@ class HighPassDiffCore(ResArrayBase):
 
         # draw MOM cap
         xc = bnd_box.xm
-        bot_layer = self.place_info.conn_layer
+        bot_layer = self.place_info.conn_layer + 1
         top_layer = self.place_info.top_layer - 1
         num_layer = top_layer - bot_layer + 1
         # set bottom parity based on number of resistors to avoid via-to-via spacing errors
