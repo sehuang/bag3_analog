@@ -24,7 +24,6 @@ from bag.util.immutable import Param
 from bag.layout.template import TemplateDB
 from bag.layout.routing.base import TrackID, WireArray
 from bag.util.math import HalfInt
-from bag.design.database import ModuleDB
 from bag.design.module import Module
 
 from xbase.layout.enum import MOSWireType, MOSPortType
@@ -34,6 +33,8 @@ from xbase.layout.mos.guardring import GuardRing
 from bag3_digital.layout.stdcells.gates import InvChainCore
 
 from ...enum import DrawTaps
+from ...schematic.diffamp_self_biased import bag3_analog__diffamp_self_biased
+from ...schematic.diffamp_self_biased_buffer import bag3_analog__diffamp_self_biased_buffer
 
 
 class DiffAmpSelfBiased(MOSBase):
@@ -45,8 +46,7 @@ class DiffAmpSelfBiased(MOSBase):
 
     @classmethod
     def get_schematic_class(cls) -> Optional[Type[Module]]:
-        # noinspection PyTypeChecker
-        return ModuleDB.get_schematic_class('bag3_analog', 'diffamp_self_biased')
+        return bag3_analog__diffamp_self_biased
 
     @classmethod
     def get_params_info(cls) -> Dict[str, str]:
@@ -322,7 +322,7 @@ class DiffAmpSelfBiased(MOSBase):
 
 
 class DiffAmpSelfBiasedBuffer(MOSBase):
-    """self biased differential amplifier followed bu buffer
+    """self biased differential amplifier followed by buffer
     """
 
     def __init__(self, temp_db: TemplateDB, params: Param, **kwargs: Any) -> None:
@@ -330,8 +330,7 @@ class DiffAmpSelfBiasedBuffer(MOSBase):
 
     @classmethod
     def get_schematic_class(cls) -> Optional[Type[Module]]:
-        # noinspection PyTypeChecker
-        return ModuleDB.get_schematic_class('bag3_analog', 'diffamp_self_biased_buffer')
+        return bag3_analog__diffamp_self_biased_buffer
 
     @classmethod
     def get_params_info(cls) -> Dict[str, str]:
@@ -350,7 +349,7 @@ class DiffAmpSelfBiasedBuffer(MOSBase):
             flip_tile='True to flip all tiles',
             draw_taps='LEFT or RIGHT or BOTH or NONE',
             sig_locs='Signal locations for top horizontal metal layer pins',
-            export_mid='True to export mid',
+            export_mid='True to export mid; False by default',
         )
 
     @classmethod

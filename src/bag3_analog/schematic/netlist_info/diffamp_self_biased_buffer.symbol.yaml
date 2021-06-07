@@ -1,10 +1,10 @@
 lib_name: bag3_analog
-cell_name: diffamp_self_biased
+cell_name: diffamp_self_biased_buffer
 view_name: symbol
 bbox:
   - -4
   - -4
-  - 278
+  - 344
   - 204
 terminals:
   VDD:
@@ -14,9 +14,9 @@ terminals:
         purpose: 4294967295
         net: ""
         bbox:
-          - 136
+          - 156
           - 196
-          - 144
+          - 164
           - 204
     stype: 1
     ttype: 2
@@ -27,9 +27,9 @@ terminals:
         purpose: 4294967295
         net: ""
         bbox:
-          - 136
+          - 156
           - -4
-          - 144
+          - 164
           - 4
     stype: 2
     ttype: 2
@@ -59,6 +59,19 @@ terminals:
           - 124
     stype: 0
     ttype: 0
+  v_mid:
+    obj:
+      - 0
+      - layer: 229
+        purpose: 4294967295
+        net: ""
+        bbox:
+          - 336
+          - 56
+          - 344
+          - 64
+    stype: 0
+    ttype: 1
   v_out:
     obj:
       - 0
@@ -66,9 +79,9 @@ terminals:
         purpose: 4294967295
         net: ""
         bbox:
-          - 256
+          - 336
           - 96
-          - 264
+          - 344
           - 104
     stype: 0
     ttype: 1
@@ -80,11 +93,11 @@ shapes:
       net: ""
       points:
         -
-          - 140
-          - 200
+          - 280
+          - 100
         -
-          - 140
-          - 180
+          - 340
+          - 100
   -
     - 5
     - layer: 231
@@ -92,11 +105,72 @@ shapes:
       net: ""
       points:
         -
-          - 140
-          - 0
+          - 210
+          - 100
         -
-          - 140
+          - 210
+          - 60
+        -
+          - 340
+          - 60
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 160
+          - 200
+        -
+          - 160
+          - 180
+  -
+    - 7
+    - layer: 229
+      purpose: 237
+      net: ""
+      origin:
+        - 334
+        - 70
+      alignment: 7
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: v_mid
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 160
           - 20
+        -
+          - 160
+          - 0
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 230
+          - 130
+        -
+          - 230
+          - 70
+        -
+          - 280
+          - 100
+        -
+          - 230
+          - 130
   -
     - 0
     - layer: 236
@@ -105,7 +179,7 @@ shapes:
       bbox:
         - 0
         - 0
-        - 260
+        - 340
         - 200
   -
     - 8
@@ -113,7 +187,7 @@ shapes:
       purpose: 237
       net: ""
       origin:
-        - 150
+        - 190
         - 190
       alignment: 1
       orient: R0
@@ -146,7 +220,7 @@ shapes:
           - 190
           - 100
         -
-          - 260
+          - 230
           - 100
   -
     - 5
@@ -186,7 +260,7 @@ shapes:
       bbox:
         - 20
         - 20
-        - 240
+        - 320
         - 180
   -
     - 8
@@ -212,22 +286,6 @@ shapes:
       net: ""
       origin:
         - 6
-        - 90
-      alignment: 1
-      orient: R0
-      font: 5
-      height: 10
-      overbar: false
-      visible: true
-      drafting: true
-      text: v_inn
-  -
-    - 7
-    - layer: 229
-      purpose: 237
-      net: ""
-      origin:
-        - 6
         - 130
       alignment: 1
       orient: R0
@@ -243,7 +301,23 @@ shapes:
       purpose: 237
       net: ""
       origin:
-        - 130
+        - 6
+        - 90
+      alignment: 1
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: v_inn
+  -
+    - 7
+    - layer: 229
+      purpose: 237
+      net: ""
+      origin:
+        - 150
         - 194
       alignment: 1
       orient: R270
@@ -259,7 +333,7 @@ shapes:
       purpose: 237
       net: ""
       origin:
-        - 130
+        - 150
         - 6
       alignment: 7
       orient: R270
@@ -275,7 +349,7 @@ shapes:
       purpose: 237
       net: ""
       origin:
-        - 254
+        - 334
         - 110
       alignment: 7
       orient: R0
@@ -290,27 +364,27 @@ instances:
 props:
   interfaceLastChanged:
     - 4
-    - time_val: 1623031626
+    - time_val: 1623033423
   partName:
     - 3
-    - diffamp_self_biased
+    - diffamp_self_biased_buffer
   pin#:
     - 0
-    - 10
+    - 11
   portOrder:
     - 5
     - name: ILList
-      bin_val: ("v_out" "VDD" "VSS" "v_inn" "v_inp")
+      bin_val: ("v_mid" "v_out" "VDD" "VSS" "v_inn" "v_inp")
   vendorName:
     - 3
     - ""
 app_defs:
   _dbLastSavedCounter:
     - 0
-    - 217
+    - 265
   _dbvCvTimeStamp:
     - 0
-    - 217
+    - 265
   cdbRevision:
     - 0
     - 227612
