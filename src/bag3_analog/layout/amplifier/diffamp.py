@@ -506,12 +506,13 @@ class DiffAmpSelfBiasedBufferGuardRing(GuardRing):
         master = self.new_template(DiffAmpSelfBiasedBuffer, params=core_params)
 
         sub_sep = master.sub_sep_col
+        gr_sub_sep = master.gr_sub_sep_col
         sep_ncol_left = sep_ncol_right = sub_sep
         draw_taps: DrawTaps = DrawTaps[params['draw_taps']]
         if draw_taps in DrawTaps.RIGHT | DrawTaps.BOTH:
-            sep_ncol_right = sub_sep // 2
+            sep_ncol_right = gr_sub_sep - sub_sep // 2
         if draw_taps in DrawTaps.LEFT | DrawTaps.BOTH:
-            sep_ncol_left = sub_sep // 2
+            sep_ncol_left = gr_sub_sep - sub_sep // 2
         sep_ncol = (sep_ncol_left, sep_ncol_right)
 
         inst, sup_list = self.draw_guard_ring(master, pmos_gr, nmos_gr, sep_ncol, edge_ncol)
