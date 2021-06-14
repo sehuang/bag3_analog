@@ -1,0 +1,195 @@
+lib_name: bag3_analog
+cell_name: res_dummy
+view_name: symbol
+bbox:
+  - 0
+  - 0
+  - 209
+  - 136
+terminals:
+  BULK:
+    obj:
+      - 0
+      - layer: 229
+        purpose: 4294967295
+        net: ""
+        bbox:
+          - 76
+          - 56
+          - 84
+          - 64
+    stype: 2
+    ttype: 2
+shapes:
+  -
+    - 8
+    - layer: 237
+      purpose: 248
+      net: ""
+      origin:
+        - 88
+        - 70
+      alignment: 1
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: cdsTerm("VSS")
+      evaluator: cdsSkillEvalText
+  -
+    - 7
+    - layer: 229
+      purpose: 237
+      net: ""
+      origin:
+        - 74
+        - 70
+      alignment: 7
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: BULK
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 20
+          - 100
+        -
+          - 50
+          - 100
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 30
+          - 60
+        -
+          - 80
+          - 60
+  -
+    - 0
+    - layer: 236
+      purpose: 4294967295
+      net: ""
+      bbox:
+        - 0
+        - 0
+        - 80
+        - 120
+  -
+    - 8
+    - layer: 237
+      purpose: 247
+      net: ""
+      origin:
+        - 80
+        - 130
+      alignment: 1
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: cdsName()
+      evaluator: cdsSkillEvalText
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 50
+          - 100
+        -
+          - 50
+          - 20
+        -
+          - 20
+          - 20
+  -
+    - 6
+    - layer: 231
+      purpose: 241
+      net: ""
+      width: 4
+      points:
+        -
+          - 20
+          - 100
+        -
+          - 20
+          - 90
+        -
+          - 30
+          - 80
+        -
+          - 10
+          - 70
+        -
+          - 30
+          - 60
+        -
+          - 10
+          - 50
+        -
+          - 30
+          - 40
+        -
+          - 20
+          - 30
+        -
+          - 20
+          - 20
+      style: 2
+      begin_ext: 0
+      end_ext: 0
+  -
+    - 0
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      bbox:
+        - 0
+        - 0
+        - 80
+        - 120
+instances:
+  {}
+props:
+  instNamePrefix:
+    - 3
+    - X
+  interfaceLastChanged:
+    - 4
+    - time_val: 1623633674
+  pin#:
+    - 0
+    - 4
+  portOrder:
+    - 5
+    - name: ILList
+      bin_val: ("BULK")
+app_defs:
+  _dbLastSavedCounter:
+    - 0
+    - 313
+  _dbvCvTimeStamp:
+    - 0
+    - 313
+  cdbRevision:
+    - 0
+    - 227612

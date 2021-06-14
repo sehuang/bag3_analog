@@ -1,0 +1,1081 @@
+lib_name: bag3_analog
+cell_name: high_pass_diff
+view_name: schematic
+bbox:
+  - -205
+  - -504
+  - 500
+  - 244
+terminals:
+  BULK:
+    obj:
+      - 1
+      - inst:
+          lib_name: basic
+          cell_name: iopin
+          view_name: symbolr
+          xform:
+            - -140
+            - -30
+            - R0
+          bbox:
+            - -201
+            - -56
+            - -130
+            - -20
+          connections:
+            {}
+          params:
+            {}
+          is_primitive: true
+        attr:
+          layer: 229
+          purpose: 237
+          net: ""
+          origin:
+            - -165
+            - -30
+          alignment: 7
+          orient: R0
+          font: 5
+          height: 10
+          overbar: false
+          visible: true
+          drafting: true
+          attr_type: 0
+          format: 1
+    stype: 0
+    ttype: 2
+  biasn:
+    obj:
+      - 1
+      - inst:
+          lib_name: basic
+          cell_name: iopin
+          view_name: symbolr
+          xform:
+            - -140
+            - -10
+            - R0
+          bbox:
+            - -201
+            - -36
+            - -130
+            - 0
+          connections:
+            {}
+          params:
+            {}
+          is_primitive: true
+        attr:
+          layer: 229
+          purpose: 237
+          net: ""
+          origin:
+            - -165
+            - -10
+          alignment: 7
+          orient: R0
+          font: 5
+          height: 10
+          overbar: false
+          visible: true
+          drafting: true
+          attr_type: 0
+          format: 1
+    stype: 0
+    ttype: 2
+  biasp:
+    obj:
+      - 1
+      - inst:
+          lib_name: basic
+          cell_name: iopin
+          view_name: symbolr
+          xform:
+            - -140
+            - 50
+            - R0
+          bbox:
+            - -201
+            - 24
+            - -130
+            - 60
+          connections:
+            {}
+          params:
+            {}
+          is_primitive: true
+        attr:
+          layer: 229
+          purpose: 237
+          net: ""
+          origin:
+            - -165
+            - 50
+          alignment: 7
+          orient: R0
+          font: 5
+          height: 10
+          overbar: false
+          visible: true
+          drafting: true
+          attr_type: 0
+          format: 1
+    stype: 0
+    ttype: 2
+  inn:
+    obj:
+      - 1
+      - inst:
+          lib_name: basic
+          cell_name: iopin
+          view_name: symbolr
+          xform:
+            - -140
+            - 30
+            - R0
+          bbox:
+            - -201
+            - 4
+            - -130
+            - 40
+          connections:
+            {}
+          params:
+            {}
+          is_primitive: true
+        attr:
+          layer: 229
+          purpose: 237
+          net: ""
+          origin:
+            - -165
+            - 30
+          alignment: 7
+          orient: R0
+          font: 5
+          height: 10
+          overbar: false
+          visible: true
+          drafting: true
+          attr_type: 0
+          format: 1
+    stype: 0
+    ttype: 2
+  inp:
+    obj:
+      - 1
+      - inst:
+          lib_name: basic
+          cell_name: iopin
+          view_name: symbolr
+          xform:
+            - -140
+            - 90
+            - R0
+          bbox:
+            - -201
+            - 64
+            - -130
+            - 100
+          connections:
+            {}
+          params:
+            {}
+          is_primitive: true
+        attr:
+          layer: 229
+          purpose: 237
+          net: ""
+          origin:
+            - -165
+            - 90
+          alignment: 7
+          orient: R0
+          font: 5
+          height: 10
+          overbar: false
+          visible: true
+          drafting: true
+          attr_type: 0
+          format: 1
+    stype: 0
+    ttype: 2
+  outn:
+    obj:
+      - 1
+      - inst:
+          lib_name: basic
+          cell_name: iopin
+          view_name: symbolr
+          xform:
+            - -140
+            - 10
+            - R0
+          bbox:
+            - -201
+            - -16
+            - -130
+            - 20
+          connections:
+            {}
+          params:
+            {}
+          is_primitive: true
+        attr:
+          layer: 229
+          purpose: 237
+          net: ""
+          origin:
+            - -165
+            - 10
+          alignment: 7
+          orient: R0
+          font: 5
+          height: 10
+          overbar: false
+          visible: true
+          drafting: true
+          attr_type: 0
+          format: 1
+    stype: 0
+    ttype: 2
+  outp:
+    obj:
+      - 1
+      - inst:
+          lib_name: basic
+          cell_name: iopin
+          view_name: symbolr
+          xform:
+            - -140
+            - 70
+            - R0
+          bbox:
+            - -201
+            - 44
+            - -130
+            - 80
+          connections:
+            {}
+          params:
+            {}
+          is_primitive: true
+        attr:
+          layer: 229
+          purpose: 237
+          net: ""
+          origin:
+            - -165
+            - 70
+          alignment: 7
+          orient: R0
+          font: 5
+          height: 10
+          overbar: false
+          visible: true
+          drafting: true
+          attr_type: 0
+          format: 1
+    stype: 0
+    ttype: 2
+shapes:
+  -
+    - 5
+    - layer: 228
+      purpose: 4294967295
+      net: midp
+      points:
+        -
+          - 370
+          - 140
+        -
+          - 370
+          - 180
+  -
+    - 5
+    - layer: 228
+      purpose: 4294967295
+      net: inn
+      points:
+        -
+          - -100
+          - -30
+        -
+          - -60
+          - -30
+  -
+    - 5
+    - layer: 228
+      purpose: 4294967295
+      net: biasp
+      points:
+        -
+          - 370
+          - 40
+        -
+          - 370
+          - 80
+  -
+    - 7
+    - layer: 228
+      purpose: 237
+      net: biasp
+      origin:
+        - 363
+        - 76
+      alignment: 8
+      orient: R90
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: biasp
+  -
+    - 5
+    - layer: 228
+      purpose: 4294967295
+      net: midn
+      points:
+        -
+          - 370
+          - -60
+        -
+          - 370
+          - -20
+  -
+    - 7
+    - layer: 228
+      purpose: 237
+      net: BULK
+      origin:
+        - 394
+        - 107
+      alignment: 2
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: BULK
+  -
+    - 5
+    - layer: 228
+      purpose: 4294967295
+      net: biasn
+      points:
+        -
+          - 370
+          - -160
+        -
+          - 370
+          - -120
+  -
+    - 7
+    - layer: 228
+      purpose: 237
+      net: biasn
+      origin:
+        - 363
+        - -124
+      alignment: 8
+      orient: R90
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: biasn
+  -
+    - 5
+    - layer: 228
+      purpose: 4294967295
+      net: BULK
+      points:
+        -
+          - 390
+          - -100
+        -
+          - 430
+          - -100
+  -
+    - 7
+    - layer: 228
+      purpose: 237
+      net: BULK
+      origin:
+        - 394
+        - -93
+      alignment: 2
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: BULK
+  -
+    - 5
+    - layer: 228
+      purpose: 4294967295
+      net: biasn
+      points:
+        -
+          - 370
+          - -400
+        -
+          - 370
+          - -360
+  -
+    - 7
+    - layer: 228
+      purpose: 237
+      net: biasn
+      origin:
+        - 363
+        - -370
+      alignment: 5
+      orient: R90
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: biasn
+  -
+    - 5
+    - layer: 228
+      purpose: 4294967295
+      net: midp
+      points:
+        -
+          - 120
+          - 150
+        -
+          - 160
+          - 150
+  -
+    - 5
+    - layer: 228
+      purpose: 4294967295
+      net: BULK
+      points:
+        -
+          - 390
+          - 100
+        -
+          - 430
+          - 100
+  -
+    - 5
+    - layer: 228
+      purpose: 4294967295
+      net: net3
+      points:
+        -
+          - 0
+          - 150
+        -
+          - 60
+          - 150
+  -
+    - 5
+    - layer: 228
+      purpose: 4294967295
+      net: inp
+      points:
+        -
+          - -100
+          - 150
+        -
+          - -60
+          - 150
+  -
+    - 5
+    - layer: 228
+      purpose: 4294967295
+      net: midn
+      points:
+        -
+          - 120
+          - -30
+        -
+          - 160
+          - -30
+  -
+    - 7
+    - layer: 228
+      purpose: 237
+      net: midp
+      origin:
+        - 363
+        - 170
+      alignment: 5
+      orient: R90
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: midp
+  -
+    - 5
+    - layer: 228
+      purpose: 4294967295
+      net: net1
+      points:
+        -
+          - 0
+          - -30
+        -
+          - 60
+          - -30
+  -
+    - 7
+    - layer: 228
+      purpose: 237
+      net: outn
+      origin:
+        - 224
+        - -23
+      alignment: 2
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: outn
+  -
+    - 5
+    - layer: 228
+      purpose: 4294967295
+      net: outn
+      points:
+        -
+          - 220
+          - -30
+        -
+          - 260
+          - -30
+  -
+    - 7
+    - layer: 228
+      purpose: 237
+      net: midn
+      origin:
+        - 363
+        - -30
+      alignment: 5
+      orient: R90
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: midn
+  -
+    - 7
+    - layer: 228
+      purpose: 237
+      net: inn
+      origin:
+        - -90
+        - -23
+      alignment: 5
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: inn
+  -
+    - 7
+    - layer: 228
+      purpose: 237
+      net: outp
+      origin:
+        - 224
+        - 157
+      alignment: 2
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: outp
+  -
+    - 5
+    - layer: 228
+      purpose: 4294967295
+      net: biasp
+      points:
+        -
+          - 370
+          - -330
+        -
+          - 370
+          - -290
+  -
+    - 7
+    - layer: 228
+      purpose: 237
+      net: biasp
+      origin:
+        - 363
+        - -294
+      alignment: 8
+      orient: R90
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: biasp
+  -
+    - 5
+    - layer: 228
+      purpose: 4294967295
+      net: biasp
+      points:
+        -
+          - 370
+          - -230
+        -
+          - 370
+          - -190
+  -
+    - 7
+    - layer: 228
+      purpose: 237
+      net: biasp
+      origin:
+        - 363
+        - -200
+      alignment: 5
+      orient: R90
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: biasp
+  -
+    - 5
+    - layer: 228
+      purpose: 4294967295
+      net: BULK
+      points:
+        -
+          - 390
+          - -270
+        -
+          - 430
+          - -270
+  -
+    - 7
+    - layer: 228
+      purpose: 237
+      net: BULK
+      origin:
+        - 394
+        - -263
+      alignment: 2
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: BULK
+  -
+    - 7
+    - layer: 228
+      purpose: 237
+      net: inp
+      origin:
+        - -90
+        - 157
+      alignment: 5
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: inp
+  -
+    - 5
+    - layer: 228
+      purpose: 4294967295
+      net: outp
+      points:
+        -
+          - 220
+          - 150
+        -
+          - 260
+          - 150
+  -
+    - 5
+    - layer: 228
+      purpose: 4294967295
+      net: biasn
+      points:
+        -
+          - 370
+          - -500
+        -
+          - 370
+          - -460
+  -
+    - 7
+    - layer: 228
+      purpose: 237
+      net: biasn
+      origin:
+        - 363
+        - -464
+      alignment: 8
+      orient: R90
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: biasn
+  -
+    - 5
+    - layer: 228
+      purpose: 4294967295
+      net: BULK
+      points:
+        -
+          - 390
+          - -440
+        -
+          - 430
+          - -440
+  -
+    - 7
+    - layer: 228
+      purpose: 237
+      net: BULK
+      origin:
+        - 394
+        - -433
+      alignment: 2
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: BULK
+  -
+    - 7
+    - layer: 228
+      purpose: 237
+      net: midp
+      origin:
+        - 140
+        - 157
+      alignment: 5
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: midp
+  -
+    - 7
+    - layer: 228
+      purpose: 237
+      net: midn
+      origin:
+        - 140
+        - -23
+      alignment: 5
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: midn
+instances:
+  XCAPN:
+    lib_name: analogLib
+    cell_name: cap
+    view_name: symbol
+    xform:
+      - 60
+      - -30
+      - R90
+    bbox:
+      - 56
+      - -152
+      - 124
+      - 64
+    connections:
+      MINUS: midn
+      PLUS: net1
+    params:
+      {}
+    is_primitive: true
+  XCAPP:
+    lib_name: analogLib
+    cell_name: cap
+    view_name: symbol
+    xform:
+      - 60
+      - 150
+      - R90
+    bbox:
+      - 56
+      - 28
+      - 124
+      - 244
+    connections:
+      MINUS: midp
+      PLUS: net3
+    params:
+      {}
+    is_primitive: true
+  XMRESN1:
+    lib_name: BAG_prim
+    cell_name: res_metal_1
+    view_name: symbol
+    xform:
+      - -70
+      - -70
+      - R90
+    bbox:
+      - -70
+      - -162
+      - 4
+      - 64
+    connections:
+      MINUS: net1
+      PLUS: inn
+    params:
+      l:
+        - 3
+        - 1u
+      w:
+        - 3
+        - 44n
+    is_primitive: true
+  XMRESN2:
+    lib_name: BAG_prim
+    cell_name: res_metal_1
+    view_name: symbol
+    xform:
+      - 150
+      - -70
+      - R90
+    bbox:
+      - 150
+      - -162
+      - 224
+      - 64
+    connections:
+      MINUS: outn
+      PLUS: midn
+    params:
+      l:
+        - 3
+        - 1u
+      w:
+        - 3
+        - 44n
+    is_primitive: true
+  XMRESP1:
+    lib_name: BAG_prim
+    cell_name: res_metal_1
+    view_name: symbol
+    xform:
+      - -70
+      - 110
+      - R90
+    bbox:
+      - -70
+      - 18
+      - 4
+      - 244
+    connections:
+      MINUS: net3
+      PLUS: inp
+    params:
+      l:
+        - 3
+        - 1u
+      w:
+        - 3
+        - 44n
+    is_primitive: true
+  XMRESP2:
+    lib_name: BAG_prim
+    cell_name: res_metal_1
+    view_name: symbol
+    xform:
+      - 150
+      - 110
+      - R90
+    bbox:
+      - 150
+      - 18
+      - 224
+      - 244
+    connections:
+      MINUS: outp
+      PLUS: midp
+    params:
+      l:
+        - 3
+        - 1u
+      w:
+        - 3
+        - 44n
+    is_primitive: true
+  XRESN:
+    lib_name: BAG_prim
+    cell_name: res_standard
+    view_name: symbol
+    xform:
+      - 330
+      - -50
+      - R0
+    bbox:
+      - 238
+      - -124
+      - 500
+      - -50
+    connections:
+      BULK: BULK
+      MINUS: biasn
+      PLUS: midn
+    params:
+      l:
+        - 3
+        - 400n
+      w:
+        - 3
+        - 400n
+    is_primitive: true
+  XRESND:
+    lib_name: BAG_prim
+    cell_name: res_standard
+    view_name: symbol
+    xform:
+      - 330
+      - -390
+      - R0
+    bbox:
+      - 238
+      - -464
+      - 500
+      - -390
+    connections:
+      BULK: BULK
+      MINUS: biasn
+      PLUS: biasn
+    params:
+      l:
+        - 3
+        - 400n
+      w:
+        - 3
+        - 400n
+    is_primitive: true
+  XRESP:
+    lib_name: BAG_prim
+    cell_name: res_standard
+    view_name: symbol
+    xform:
+      - 330
+      - 150
+      - R0
+    bbox:
+      - 238
+      - 76
+      - 500
+      - 150
+    connections:
+      BULK: BULK
+      MINUS: biasp
+      PLUS: midp
+    params:
+      l:
+        - 3
+        - 400n
+      w:
+        - 3
+        - 400n
+    is_primitive: true
+  XRESPD:
+    lib_name: BAG_prim
+    cell_name: res_standard
+    view_name: symbol
+    xform:
+      - 330
+      - -220
+      - R0
+    bbox:
+      - 238
+      - -294
+      - 500
+      - -220
+    connections:
+      BULK: BULK
+      MINUS: biasp
+      PLUS: biasp
+    params:
+      l:
+        - 3
+        - 400n
+      w:
+        - 3
+        - 400n
+    is_primitive: true
+props:
+  connectivityLastUpdated:
+    - 0
+    - 4845
+  instance#:
+    - 0
+    - 7
+  lastSchematicExtraction:
+    - 4
+    - time_val: 1615958809
+  net#:
+    - 0
+    - 2
+  pin#:
+    - 0
+    - 8
+  schGeometryLastUpdated:
+    - 0
+    - 4845
+  schGeometryVersion:
+    - 3
+    - sch.ds.gm.1.4
+  schXtrVersion:
+    - 3
+    - sch.10.0
+app_defs:
+  _dbLastSavedCounter:
+    - 0
+    - 4845
+  _dbvCvTimeStamp:
+    - 0
+    - 4845
+  cdbRevision:
+    - 0
+    - 227612

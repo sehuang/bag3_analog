@@ -29,8 +29,8 @@
 
 from typing import Any, Dict, List, Optional, Type, cast, Iterable, Union, Tuple
 
-from pybag.enum import RoundMode, Direction, Orientation
-from pybag.core import Transform, BBox
+from pybag.enum import RoundMode, Direction
+from pybag.core import BBox
 
 from bag.util.immutable import Param
 from bag.design.module import Module
@@ -491,13 +491,3 @@ class ResLadder(ResArrayBase):
             self.draw_vias_on_intersections(bot_unit_info[hm_layer][0], bot_unit_info[vm_layer][2][0])
 
         return vm_w, mres_l, vm_layer
-
-    def _get_transform(self, _xidx, _yidx):
-        w = self._info.width
-        h = self._info.height
-        orient = Orientation.R0
-
-        dx = w * _xidx
-        dy = h * _yidx
-
-        return Transform(dx, dy, orient)
