@@ -494,6 +494,8 @@ class HighPassArrayCore(ResArrayBase):
 
         if nser % 2 != 0:
             raise ValueError('This generator only supports even nser.')
+        if narr > len(cap_h_list):
+            raise ValueError('cap_h_list should contain at least narr entries')
 
         assert self.params['pinfo']['ny'] == 1, "Only ny=1 supported right now"
         assert narr * nser + ndum * 2 == self.params['pinfo']['nx'], "Set nx based on calculation"

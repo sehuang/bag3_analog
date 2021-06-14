@@ -100,25 +100,12 @@ class bag3_analog__high_pass(Module):
         in_name = 'xp'
         out_name = 'bias'
         mid_name = 'mid'
-        self.instances[inst_name].design(w=w, l=l, intent=intent)
+        unit_params = dict(w=w, l=l, intent=intent)
         if nser == 1:
-            if sub_name:
-                self.reconnect_instance_terminal(inst_name, 'BULK', sub_name)
+            self.design_resistor(inst_name, unit_params, bulk=sub_name)
         else:
-            if nser == 2:
-                pos_name = '%s,%s' % (in_name, mid_name)
-                neg_name = '%s,%s' % (mid_name, out_name)
-            else:
-                pos_name = '%s,%s<%d:0>' % (in_name, mid_name, nser - 2)
-                neg_name = '%s<%d:0>,%s' % (mid_name, nser - 2, out_name)
-            if sub_name:
-                term_dict = dict(PLUS=pos_name, MINUS=neg_name, BULK=sub_name)
-            else:
-                term_dict = dict(PLUS=pos_name, MINUS=neg_name)
-            name_list = ['%s<%d:0>' % (inst_name, nser - 1)]
-            term_list = [term_dict]
-
-            self.array_instance(inst_name, name_list, term_list=term_list)
+            self.design_resistor(inst_name, unit_params, nser, 1,
+                                 in_name, out_name, mid_name, sub_name)
 
         # Design capacitors
         if extracted:

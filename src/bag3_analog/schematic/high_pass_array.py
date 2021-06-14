@@ -77,7 +77,7 @@ class bag3_analog__high_pass_array(Module):
         self.instances['XHP'].design(**hp_params)
 
         if narr > 1:
-            suf = '<%d:0>' % (narr - 1)
+            suf = f'<{narr - 1}:0>'
             term_dict = {}
             for name in ('in', 'out', 'bias'):
                 new_name = name + suf

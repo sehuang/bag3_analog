@@ -63,7 +63,7 @@ class bag3_analog__high_pass_clk(Module):
 
         sub_name = hp_params['sub_name']
 
-        suf = '<%d:0>' % (narr - 1)
+        suf = f'<{narr - 1}:0>'
         term_list = []
         for name in ('out', 'bias'):
             new_name = name + suf
@@ -73,10 +73,8 @@ class bag3_analog__high_pass_clk(Module):
 
         self.reconnect_instance('XHPA', term_net_iter=term_list)
         narr_2 = narr // 2
-        clk_name = ''
-        for idx in range(narr_2):
-            clk_name = 'clkp,clkn,' + clk_name if idx % 2 else 'clkn,clkp,' + clk_name
-        clk_name = clk_name[:-1]  # remove trailing comma
+        clk_list = ['clkp,clkn' if idx % 2 else 'clkn,clkp' for idx in range(narr_2)]
+        clk_name = ','.join(clk_list)
         self.reconnect_instance_terminal('XHPA', 'in' + suf, clk_name)
 
         self.rename_pin('BULK', sub_name)

@@ -92,15 +92,12 @@ class bag3_analog__high_pass_diff(Module):
                      ('XCAPN', 'XRESN', 'inn', 'midn', 'biasn'))
 
         # Design resistors
+        unit_params = dict(l=l, w=w, intent=intent)
         for info_tuple in name_info:
             res_name = info_tuple[1]
             out_name = info_tuple[-2]
-            self.instances[res_name].design(l=l, w=w, intent=intent)
-            term_list = [(res_name + f'{x}',
-                          [('PLUS', out_name if x == 0 else f'{out_name}_{x - 1}'),
-                           ('MINUS', info_tuple[-1] if x == nser - 1 else f'{out_name}_{x}'), ('BULK', sub_name)])
-                         for x in range(nser)]
-            self.array_instance(res_name, inst_term_list=term_list, dx=100, dy=0)
+            self.design_resistor(res_name, unit_params, nser, 1,
+                                 out_name, info_tuple[-1], f'{out_name}_x', sub_name)
 
         # Design dummy resistors
         dummy_info = [('XRESPD', 'biasp'), ('XRESND', 'biasn')]
@@ -108,11 +105,7 @@ class bag3_analog__high_pass_diff(Module):
             if not ndum:
                 self.remove_instance(name)
             else:
-                self.instances[name].design(l=l, w=w, intent=intent)
-                term_list = [(f'{name}{x}',
-                              [('PLUS', bias), ('MINUS', bias), ('BULK', sub_name)])
-                             for x in range(ndum)]
-                self.array_instance(name, inst_term_list=term_list, dx=100, dy=0)
+                self.design_resistor(name, unit_params, 1, ndum, bias, bias, bulk=sub_name)
 
         # Design capacitors
         if extracted:

@@ -80,11 +80,5 @@ class bag3_analog__res_dummy(Module):
         if ndum == 0:
             self.delete_instance('RDUM')
         else:
-            self.instances['RDUM'].design(w=w, l=l, intent=intent)
-            term_list = [dict(BULK=sub_name, PLUS=sub_name, MINUS=sub_name)]
-            if ndum > 1:
-                self.array_instance('RDUM', ['RDUM<%d:0>' % (ndum - 1)], term_list=term_list)
-            else:
-                self.reconnect_instance('RDUM', term_list)
-
-
+            unit_params = dict(w=w, l=l, intent=intent)
+            self.design_resistor('RDUM', unit_params, 1, ndum, sub_name, sub_name, bulk=sub_name)
