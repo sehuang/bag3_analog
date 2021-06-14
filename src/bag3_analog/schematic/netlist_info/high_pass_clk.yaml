@@ -1,0 +1,374 @@
+lib_name: bag3_analog
+cell_name: high_pass_clk
+view_name: schematic
+bbox:
+  - -433
+  - -87
+  - 78
+  - 250
+terminals:
+  BULK:
+    obj:
+      - 1
+      - inst:
+          lib_name: basic
+          cell_name: iopin
+          view_name: symbolr
+          xform:
+            - -340
+            - 240
+            - R0
+          bbox:
+            - -401
+            - 214
+            - -330
+            - 250
+          connections:
+            {}
+          params:
+            {}
+          is_primitive: true
+        attr:
+          layer: 229
+          purpose: 237
+          net: ""
+          origin:
+            - -365
+            - 240
+          alignment: 7
+          orient: R0
+          font: 5
+          height: 10
+          overbar: false
+          visible: true
+          drafting: true
+          attr_type: 0
+          format: 1
+    stype: 2
+    ttype: 2
+  bias<0>:
+    obj:
+      - 1
+      - inst:
+          lib_name: basic
+          cell_name: ipin
+          view_name: symbol
+          xform:
+            - -340
+            - 170
+            - R0
+          bbox:
+            - -397
+            - 144
+            - -340
+            - 180
+          connections:
+            {}
+          params:
+            {}
+          is_primitive: true
+        attr:
+          layer: 229
+          purpose: 237
+          net: ""
+          origin:
+            - -370
+            - 170
+          alignment: 7
+          orient: R0
+          font: 5
+          height: 10
+          overbar: false
+          visible: true
+          drafting: true
+          attr_type: 0
+          format: 1
+    stype: 0
+    ttype: 0
+  clkn:
+    obj:
+      - 1
+      - inst:
+          lib_name: basic
+          cell_name: ipin
+          view_name: symbol
+          xform:
+            - -340
+            - 190
+            - R0
+          bbox:
+            - -397
+            - 164
+            - -340
+            - 200
+          connections:
+            {}
+          params:
+            {}
+          is_primitive: true
+        attr:
+          layer: 229
+          purpose: 237
+          net: ""
+          origin:
+            - -370
+            - 190
+          alignment: 7
+          orient: R0
+          font: 5
+          height: 10
+          overbar: false
+          visible: true
+          drafting: true
+          attr_type: 0
+          format: 1
+    stype: 0
+    ttype: 0
+  clkp:
+    obj:
+      - 1
+      - inst:
+          lib_name: basic
+          cell_name: ipin
+          view_name: symbol
+          xform:
+            - -340
+            - 210
+            - R0
+          bbox:
+            - -397
+            - 184
+            - -340
+            - 220
+          connections:
+            {}
+          params:
+            {}
+          is_primitive: true
+        attr:
+          layer: 229
+          purpose: 237
+          net: ""
+          origin:
+            - -370
+            - 210
+          alignment: 7
+          orient: R0
+          font: 5
+          height: 10
+          overbar: false
+          visible: true
+          drafting: true
+          attr_type: 0
+          format: 1
+    stype: 0
+    ttype: 0
+  out<0>:
+    obj:
+      - 1
+      - inst:
+          lib_name: basic
+          cell_name: opin
+          view_name: symbol
+          xform:
+            - -300
+            - 190
+            - R0
+          bbox:
+            - -300
+            - 164
+            - -243
+            - 200
+          connections:
+            {}
+          params:
+            {}
+          is_primitive: true
+        attr:
+          layer: 229
+          purpose: 237
+          net: ""
+          origin:
+            - -275
+            - 190
+          alignment: 1
+          orient: R0
+          font: 5
+          height: 10
+          overbar: false
+          visible: true
+          drafting: true
+          attr_type: 0
+          format: 1
+    stype: 0
+    ttype: 1
+shapes:
+  -
+    - 5
+    - layer: 228
+      purpose: 4294967295
+      net: BULK
+      points:
+        -
+          - -140
+          - -60
+        -
+          - -140
+          - -20
+  -
+    - 7
+    - layer: 228
+      purpose: 237
+      net: BULK
+      origin:
+        - -147
+        - -24
+      alignment: 8
+      orient: R90
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: BULK
+  -
+    - 5
+    - layer: 228
+      purpose: 4294967295
+      net: out<0>
+      points:
+        -
+          - -40
+          - 120
+        -
+          - 0
+          - 120
+  -
+    - 7
+    - layer: 228
+      purpose: 237
+      net: out<0>
+      origin:
+        - -36
+        - 127
+      alignment: 2
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: out<0>
+  -
+    - 5
+    - layer: 228
+      purpose: 4294967295
+      net: clkp
+      points:
+        -
+          - -240
+          - 120
+        -
+          - -200
+          - 120
+  -
+    - 7
+    - layer: 228
+      purpose: 237
+      net: clkp
+      origin:
+        - -204
+        - 127
+      alignment: 8
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: clkp
+  -
+    - 5
+    - layer: 228
+      purpose: 4294967295
+      net: bias<0>
+      points:
+        -
+          - -100
+          - -60
+        -
+          - -100
+          - -20
+  -
+    - 7
+    - layer: 228
+      purpose: 237
+      net: bias<0>
+      origin:
+        - -107
+        - -24
+      alignment: 8
+      orient: R90
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: bias<0>
+instances:
+  XHPA:
+    lib_name: bag3_analog
+    cell_name: high_pass_array
+    view_name: symbol
+    xform:
+      - -200
+      - -20
+      - R0
+    bbox:
+      - -204
+      - -24
+      - 78
+      - 196
+    connections:
+      BULK: BULK
+      bias<0>: bias<0>
+      in<0>: clkp
+      out<0>: out<0>
+    params:
+      {}
+    is_primitive: false
+props:
+  connectivityLastUpdated:
+    - 0
+    - 1882
+  instance#:
+    - 0
+    - 1
+  lastSchematicExtraction:
+    - 4
+    - time_val: 1623638302
+  net#:
+    - 0
+    - 0
+  pin#:
+    - 0
+    - 5
+  schGeometryLastUpdated:
+    - 0
+    - 1882
+  schGeometryVersion:
+    - 3
+    - sch.ds.gm.1.4
+  schXtrVersion:
+    - 3
+    - sch.10.0
+app_defs:
+  _dbLastSavedCounter:
+    - 0
+    - 1882
+  _dbvCvTimeStamp:
+    - 0
+    - 1882
+  cdbRevision:
+    - 0
+    - 227612

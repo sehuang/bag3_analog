@@ -1,0 +1,378 @@
+lib_name: bag3_analog
+cell_name: high_pass_array
+view_name: schematic
+bbox:
+  - -433
+  - -240
+  - 58
+  - 250
+terminals:
+  BULK:
+    obj:
+      - 1
+      - inst:
+          lib_name: basic
+          cell_name: iopin
+          view_name: symbolr
+          xform:
+            - -340
+            - 240
+            - R0
+          bbox:
+            - -401
+            - 214
+            - -330
+            - 250
+          connections:
+            {}
+          params:
+            {}
+          is_primitive: true
+        attr:
+          layer: 229
+          purpose: 237
+          net: ""
+          origin:
+            - -365
+            - 240
+          alignment: 7
+          orient: R0
+          font: 5
+          height: 10
+          overbar: false
+          visible: true
+          drafting: true
+          attr_type: 0
+          format: 1
+    stype: 2
+    ttype: 2
+  bias<0>:
+    obj:
+      - 1
+      - inst:
+          lib_name: basic
+          cell_name: ipin
+          view_name: symbol
+          xform:
+            - -340
+            - 170
+            - R0
+          bbox:
+            - -397
+            - 144
+            - -340
+            - 180
+          connections:
+            {}
+          params:
+            {}
+          is_primitive: true
+        attr:
+          layer: 229
+          purpose: 237
+          net: ""
+          origin:
+            - -370
+            - 170
+          alignment: 7
+          orient: R0
+          font: 5
+          height: 10
+          overbar: false
+          visible: true
+          drafting: true
+          attr_type: 0
+          format: 1
+    stype: 0
+    ttype: 0
+  in<0>:
+    obj:
+      - 1
+      - inst:
+          lib_name: basic
+          cell_name: ipin
+          view_name: symbol
+          xform:
+            - -340
+            - 190
+            - R0
+          bbox:
+            - -397
+            - 164
+            - -340
+            - 200
+          connections:
+            {}
+          params:
+            {}
+          is_primitive: true
+        attr:
+          layer: 229
+          purpose: 237
+          net: ""
+          origin:
+            - -370
+            - 190
+          alignment: 7
+          orient: R0
+          font: 5
+          height: 10
+          overbar: false
+          visible: true
+          drafting: true
+          attr_type: 0
+          format: 1
+    stype: 0
+    ttype: 0
+  out<0>:
+    obj:
+      - 1
+      - inst:
+          lib_name: basic
+          cell_name: opin
+          view_name: symbol
+          xform:
+            - -300
+            - 190
+            - R0
+          bbox:
+            - -300
+            - 164
+            - -243
+            - 200
+          connections:
+            {}
+          params:
+            {}
+          is_primitive: true
+        attr:
+          layer: 229
+          purpose: 237
+          net: ""
+          origin:
+            - -275
+            - 190
+          alignment: 1
+          orient: R0
+          font: 5
+          height: 10
+          overbar: false
+          visible: true
+          drafting: true
+          attr_type: 0
+          format: 1
+    stype: 0
+    ttype: 1
+shapes:
+  -
+    - 5
+    - layer: 228
+      purpose: 4294967295
+      net: BULK
+      points:
+        -
+          - -80
+          - -60
+        -
+          - -80
+          - -20
+  -
+    - 7
+    - layer: 228
+      purpose: 237
+      net: BULK
+      origin:
+        - -87
+        - -24
+      alignment: 8
+      orient: R90
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: BULK
+  -
+    - 5
+    - layer: 228
+      purpose: 4294967295
+      net: in<0>
+      points:
+        -
+          - -240
+          - 100
+        -
+          - -200
+          - 100
+  -
+    - 7
+    - layer: 228
+      purpose: 237
+      net: in<0>
+      origin:
+        - -204
+        - 107
+      alignment: 8
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: in<0>
+  -
+    - 5
+    - layer: 228
+      purpose: 4294967295
+      net: bias<0>
+      points:
+        -
+          - -120
+          - -60
+        -
+          - -120
+          - -20
+  -
+    - 7
+    - layer: 228
+      purpose: 237
+      net: bias<0>
+      origin:
+        - -127
+        - -24
+      alignment: 8
+      orient: R90
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: bias<0>
+  -
+    - 5
+    - layer: 228
+      purpose: 4294967295
+      net: out<0>
+      points:
+        -
+          - -60
+          - 100
+        -
+          - -20
+          - 100
+  -
+    - 7
+    - layer: 228
+      purpose: 237
+      net: out<0>
+      origin:
+        - -56
+        - 107
+      alignment: 2
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: out<0>
+  -
+    - 5
+    - layer: 228
+      purpose: 4294967295
+      net: BULK
+      points:
+        -
+          - -120
+          - -180
+        -
+          - -80
+          - -180
+  -
+    - 7
+    - layer: 228
+      purpose: 237
+      net: BULK
+      origin:
+        - -116
+        - -173
+      alignment: 2
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: BULK
+instances:
+  XDUM:
+    lib_name: bag3_analog
+    cell_name: res_dummy
+    view_name: symbol
+    xform:
+      - -200
+      - -240
+      - R0
+    bbox:
+      - -200
+      - -240
+      - 9
+      - -104
+    connections:
+      VSS: BULK
+    params:
+      {}
+    is_primitive: false
+  XHP:
+    lib_name: bag3_analog
+    cell_name: high_pass
+    view_name: symbol
+    xform:
+      - -200
+      - -20
+      - R0
+    bbox:
+      - -204
+      - -24
+      - 58
+      - 176
+    connections:
+      VSS: BULK
+      bias: bias<0>
+      in: in<0>
+      out: out<0>
+    params:
+      {}
+    is_primitive: false
+props:
+  connectivityLastUpdated:
+    - 0
+    - 1101
+  lastSchematicExtraction:
+    - 4
+    - time_val: 1623633536
+  net#:
+    - 0
+    - 0
+  pin#:
+    - 0
+    - 4
+  schGeometryLastUpdated:
+    - 0
+    - 1101
+  schGeometryVersion:
+    - 3
+    - sch.ds.gm.1.4
+  schXtrVersion:
+    - 3
+    - sch.10.0
+app_defs:
+  _dbLastSavedCounter:
+    - 0
+    - 1101
+  _dbvCvTimeStamp:
+    - 0
+    - 1101
+  cdbRevision:
+    - 0
+    - 227612

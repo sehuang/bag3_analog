@@ -28,9 +28,7 @@ from bag.math import float_to_si_string
 
 # noinspection PyPep8Naming
 class bag3_analog__high_pass(Module):
-    """Module for library bag3_analog cell high_pass.
-
-    Fill in high level description here.
+    """ A single high pass filter
     """
 
     yaml_file = pkg_resources.resource_filename(__name__,
@@ -58,7 +56,6 @@ class bag3_analog__high_pass(Module):
             res_in_info='input metal resistor information.',
             res_out_info='output metal resistor information.',
             sub_name='substrate name. Empty string to disable.',
-            is_differential='is_differential',
             cap_val='Schematic value for analogLib cap',
             extracted='True if doing LVS or extraction. Removes analogLib caps'
         )
@@ -67,57 +64,71 @@ class bag3_analog__high_pass(Module):
     def get_default_param_values(cls) -> Dict[str, Any]:
         return dict(
             sub_name='VDD',
-            is_differential=True,
             cap_val=1e-9,
             extracted=False,
         )
 
     def design(self, l: int, w: int, intent: str, nser: int, ndum: int,
                res_in_info: Tuple[int, int, int], res_out_info: Tuple[int, int, int], sub_name: str,
-               is_differential: bool, cap_val: float, extracted: bool) -> None:
-        """"""
-        if not is_differential:
-            # TODO: add differential option
-            raise RuntimeError("Currently only supporting differential HPF")
-        name_info = (('XCAPP', 'XRESP', 'inp', 'midp', 'biasp'),
-                     ('XCAPN', 'XRESN', 'inn', 'midn', 'biasn'))
+               cap_val: float, extracted: bool):
+        if ndum < 0 or nser <= 0:
+            raise ValueError('Illegal values of ndum or nser.')
 
-        # Design resistors
-        for info_tuple in name_info:
-            res_name = info_tuple[1]
-            out_name = info_tuple[-2]
-            self.instances[res_name].design(l=l, w=w, intent=intent)
-            term_list = [(res_name + f'{x}',
-                         [('PLUS', out_name if x == 0 else f'{out_name}_{x-1}'),
-                          ('MINUS', info_tuple[-1] if x == nser - 1 else f'{out_name}_{x}'), ('BULK', sub_name)])
-                         for x in range(nser)]
-            self.array_instance(res_name, inst_term_list=term_list, dx=100, dy=0)
+        # handle substrate pin
+        if not sub_name:
+            # delete substrate pin
+            self.remove_pin('BULK')
+        else:
+            self.rename_pin('BULK', sub_name)
 
-        # Design dummy resistors
-        dummy_info = [('XRESPD', 'biasp'),('XRESND', 'biasn')]
-        for name, bias in dummy_info:
-            if not ndum:
-                self.remove_instance(name)
+        # design dummy
+        if ndum == 0:
+            self.delete_instance('XRDUM')
+        else:
+            self.instances['XRDUM'].design(w=w, l=l, intent=intent)
+            if ndum > 1:
+                if sub_name:
+                    term_list = [dict(BULK=sub_name)]
+                else:
+                    term_list = None
+                self.array_instance('XRDUM', ['XRDUM<%d:0>' % (ndum - 1)], term_list=term_list)
+            elif sub_name:
+                self.reconnect_instance_terminal('XRDUM', 'BULK', sub_name)
+
+        # design main resistors
+        inst_name = 'XR'
+        in_name = 'xp'
+        out_name = 'bias'
+        mid_name = 'mid'
+        self.instances[inst_name].design(w=w, l=l, intent=intent)
+        if nser == 1:
+            if sub_name:
+                self.reconnect_instance_terminal(inst_name, 'BULK', sub_name)
+        else:
+            if nser == 2:
+                pos_name = '%s,%s' % (in_name, mid_name)
+                neg_name = '%s,%s' % (mid_name, out_name)
             else:
-                self.instances[name].design(l=l, w=w, intent=intent)
-                term_list = [(f'{name}{x}',
-                              [('PLUS', bias), ('MINUS', bias), ('BULK', sub_name)])
-                             for x in range(ndum)]
-                self.array_instance(name, inst_term_list=term_list, dx=100, dy=0)
+                pos_name = '%s,%s<%d:0>' % (in_name, mid_name, nser - 2)
+                neg_name = '%s<%d:0>,%s' % (mid_name, nser - 2, out_name)
+            if sub_name:
+                term_dict = dict(PLUS=pos_name, MINUS=neg_name, BULK=sub_name)
+            else:
+                term_dict = dict(PLUS=pos_name, MINUS=neg_name)
+            name_list = ['%s<%d:0>' % (inst_name, nser - 1)]
+            term_list = [term_dict]
+
+            self.array_instance(inst_name, name_list, term_list=term_list)
 
         # Design capacitors
         if extracted:
-            self.remove_instance(name_info[0][0])
-            self.remove_instance(name_info[1][0])
+            self.remove_instance('XCAP')
         else:
             cap_val_str = float_to_si_string(cap_val)
-            self.instances[name_info[0][0]].set_param('c', cap_val_str)
-            self.instances[name_info[1][0]].set_param('c', cap_val_str)
+            self.instances['XCAP'].set_param('c', cap_val_str)
 
-        # Design metal resistors
-        self.instances['XMRESP1'].design(layer=res_in_info[0], w=res_in_info[1], l=res_in_info[2])
-        self.instances['XMRESN1'].design(layer=res_in_info[0], w=res_in_info[1], l=res_in_info[2])
-        self.instances['XMRESP2'].design(layer=res_out_info[0], w=res_out_info[1], l=res_out_info[2])
-        self.instances['XMRESN2'].design(layer=res_out_info[0], w=res_out_info[1], l=res_out_info[2])
-
-        self.rename_pin('BULK', sub_name)
+        # design metal resistors
+        res_lay, res_w, res_l = res_in_info
+        self.instances['XRMI'].design(layer=res_lay, w=res_w, l=res_l)
+        res_lay, res_w, res_l = res_out_info
+        self.instances['XRMO'].design(layer=res_lay, w=res_w, l=res_l)

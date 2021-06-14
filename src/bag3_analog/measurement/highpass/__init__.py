@@ -66,15 +66,25 @@ class HighpassACMeas(MeasurementManager):
         ans = self.compute_passives(meas_results)
 
         tf_results = await self.async_meas_tf(name, sim_dir, sim_db, dut)
-        plt.semilogx(2*np.pi*tf_results['freq'], 20*np.log10(tf_results['tf']))
+        plt.semilogx(tf_results['freq'], 20*np.log10(tf_results['tf']), label="Measured")
+
+        def get_3db(freq, tf):
+            tmp = np.argwhere(tf > -3)
+            return freq[tmp[0]]
+        measured_3db = get_3db(tf_results['freq'], 20*np.log10(tf_results['tf']))
+        plt.vlines(measured_3db, -200, 5, linestyle="dashed",
+                   label="Measured 3dB corner: {:.2f}GHz".format(measured_3db[0]/1e9))
 
         r = ans['r']
         cc = ans['cc']
         tf_calc = signal.TransferFunction([r*cc, 0], [r*cc, 1])
         w, mag, _ = signal.bode(tf_calc, 2 * np.pi * tf_results['freq'])
-        plt.semilogx(w, mag)
+        plt.semilogx(w / (2 * np.pi), mag, label="Modeled")
         plt.grid()
-
+        plt.legend()
+        plt.ylabel("outp / inp [dB]")
+        plt.xlabel("Frequency")
+        plt.title("Transfer function measurement, outp / inp")
         plt.show()
 
         return ans
@@ -88,13 +98,6 @@ class HighpassACMeas(MeasurementManager):
         assert np.isclose(freq0, freq1).all()
         assert np.isclose(freq0, freq2).all()
         assert np.isclose(freq0, freq3).all()
-        # breakpoint()
-
-        # plt.loglog(freq0, np.abs(meas_results[0]['vtest']))
-        # plt.loglog(freq0, np.abs(meas_results[1]['vtest']))
-        # plt.loglog(freq0, np.abs(meas_results[2]['vtest']))
-        #
-        # plt.show()
 
         # vm0 = (zc * zpm) / (zc + zpp + zpm)
         # vp0 = - (zc * zpp) / (zc + zpp + zpm)
