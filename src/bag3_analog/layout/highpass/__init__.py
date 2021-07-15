@@ -1044,7 +1044,7 @@ class HighPassColumn(TemplateBase):
             xform = Transform(0, ycur + dy, orient)
             inst = self.add_instance(master, inst_name='X%d' % idx, xform=xform)
             inst_list.append(inst)
-            ycur += h_unit[idx % hp_pitch.size]
+            ycur += h_unit[idx % h_unit.size]
 
         return ycur, inst_list
 
