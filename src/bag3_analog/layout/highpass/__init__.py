@@ -35,6 +35,8 @@
 
 from typing import Dict, Set, Any, cast, List, Optional, Tuple, Mapping
 
+import numpy as np
+
 from pybag.enum import RoundMode, Direction, Orientation, MinLenMode
 from pybag.core import Transform, BBox
 
@@ -1003,19 +1005,24 @@ class HighPassColumn(TemplateBase):
 
     def _place_instances(self, ycur, master0, master1):
         inst_list = []
+        h_unit = self.params['h_unit']
+        h_unit = np.atleast_1d(h_unit)
+        assert master0.bound_box.yh == master1.bound_box.yh
+        hp_height = master0.bound_box.yh
+        assert np.all(h_unit >= hp_height)
         for idx in range(self.params['narr']):
             if idx % 2 == 0:
                 master = master0
                 orient = Orientation.R0
+                dy = 0
             else:
                 master = master1
                 orient = Orientation.MX
-                ycur += master.bound_box.yh
-            xform = Transform(0, ycur, orient)
+                dy = hp_height
+            xform = Transform(0, ycur + dy, orient)
             inst = self.add_instance(master, inst_name='X%d' % idx, xform=xform)
             inst_list.append(inst)
-            if idx % 2 == 0:
-                ycur += master.bound_box.yh
+            ycur += h_unit[idx % hp_pitch.size]
 
         return ycur, inst_list
 
