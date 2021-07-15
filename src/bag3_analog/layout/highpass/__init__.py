@@ -235,8 +235,8 @@ class HighPassDiffCore(ResArrayBase):
             l=pinfo.l_res,
             w=pinfo.w_res,
             intent=res_type,
-            nser=nser,
-            ndum=self.params['nx_dum'],
+            nser=nser * self.place_info.ny,
+            ndum=(self.params['nx_dum'], self.place_info.ny),
             res_in_info=(pin_layer, res_in_w, res_in_w),
             res_out_info=(pin_layer, res_out_w, res_out_w),
             cap_val=self.params['cap_val'],
@@ -246,6 +246,7 @@ class HighPassDiffCore(ResArrayBase):
     def connect_resistors(self, bias_idx) -> Tuple[WireArray, WireArray, WireArray, WireArray, WireArray, int, int]:
         """Connect the resistors in series. bias_idx sets which track to draw the vm bias wire on"""
         nx = self._info.nx
+        ny = self._info.ny
         nx_dum = self.params['nx_dum']
         conn_layer = self.place_info.conn_layer
         hm_layer = conn_layer + 1
@@ -260,18 +261,37 @@ class HighPassDiffCore(ResArrayBase):
 
         # Add all dummies ports to biases
         for idx in range(nx_dum):
-            biasp.extend(self.get_res_ports(0, idx))
-            biasn.extend(self.get_res_ports(0, nx - 1 - idx))
+            biasp.append(self.get_res_ports(0, idx)[0])
+            biasp.append(self.get_res_ports(ny - 1, idx)[ny % 2])
+            biasn.append(self.get_res_ports(0, nx - 1 - idx)[0])
+            biasn.append(self.get_res_ports(ny - 1, nx - 1 - idx)[ny % 2])
+
+        for row in range(ny - 1):
+            row_odd = bool(row & 1)
+            for col in range(nx):
+                bot_res_ports = self.get_res_ports(row, col)
+                top_res_ports = self.get_res_ports(row + 1, col)
+                if row_odd:
+                    bbox_series_conn = bot_res_ports[0].extend(y=top_res_ports[0].yl)
+                else:
+                    bbox_series_conn = bot_res_ports[1].extend(y=top_res_ports[1].yl)
+
+                self.add_rect(prim_lay_purp, bbox_series_conn)
 
         # Snake together the resistors in series
         for idx in range(nx_dum, nx // 2):
-            cpl = self.get_res_ports(0, idx)
-            cpr = self.get_res_ports(0, nx - 1 - idx)
-            conn_par = (idx - nx_dum) % 2
+            idx_rel_dum = idx - nx_dum
+            row = 0 if idx_rel_dum % 2 == 0 else ny - 1
+
+            cpl = self.get_res_ports(row, idx)
+            cpr = self.get_res_ports(row, nx - 1 - idx)
+            conn_par = 0 if idx_rel_dum % 2 == 0 else (1 + row) % 2
             # If we're still on the last dummy, add one terminal to the bias
             if idx == nx_dum:
-                biasp.append(cpl[1 - conn_par])
-                biasn.append(cpr[1 - conn_par])
+                tmpl = self.get_res_ports(ny - 1 - row, idx)
+                tmpr = self.get_res_ports(ny - 1 - row, nx - 1 - idx)
+                biasp.append(tmpl[ny % 2])
+                biasn.append(tmpr[ny % 2])
 
             if idx == nx // 2 - 1:
                 # Get the centermost as the out terminals
@@ -290,8 +310,8 @@ class HighPassDiffCore(ResArrayBase):
             else:
                 # Snake together the resistors in series
                 # Assume the upper ports are all aligned vertically, as are the lower powers
-                npl = self.get_res_ports(0, idx + 1)
-                npr = self.get_res_ports(0, nx - 2 - idx)
+                npl = self.get_res_ports(row, idx + 1)
+                npr = self.get_res_ports(row, nx - 2 - idx)
                 # Code for handling either BBox or WireArray
                 if isinstance(npl[conn_par], WireArray):
                     if npl[conn_par].layer_id == conn_layer:
@@ -349,7 +369,9 @@ class HighPassDiffCore(ResArrayBase):
     def draw_mom_cap(self, nser, xl, xr, cap_spx, cap_spy, cap_margin
                      ) -> Tuple[WireArray, WireArray, WireArray, WireArray, WireArray, WireArray]:
         # get port location
-        bot_pin, top_pin = self.get_res_ports(0, 0)
+        ny = self._info.ny
+        bot_pin = self.get_res_ports(0, 0)[0]
+        top_pin = self.get_res_ports(ny - 1, 0)[ny % 2]
         if isinstance(bot_pin, BBox):
             bot_pin_box = bot_pin
             top_pin_box = top_pin
