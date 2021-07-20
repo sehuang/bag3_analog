@@ -405,7 +405,7 @@ class ResLadder(ResArrayBase):
 
         # Add pin
         sup_warr = self.connect_wires(xm_list)
-        self.add_pin(self._sup_name, sup_warr, connect=True)
+        self.add_pin(self._sup_name, sup_warr)
 
     def _connect_top(
             self, full_metal_dict: Dict[Tuple[int, int], Dict[int, List[Union[WireArray, List[WireArray]]]]]
@@ -462,14 +462,14 @@ class ResLadder(ResArrayBase):
                                     bot_unit_info[hm_layer][0].track_id.base_index, xm_layer)
         bot_warr = self.connect_to_tracks(
             bot_unit_info[vm_layer][2][0], TrackID(xm_layer, bot_tidx, w_sup_xm), track_lower=lower, track_upper=upper)
-        self.add_pin('VSS' if self.params['bot_vss'] else 'bottom', bot_warr, connect=True)
+        self.add_pin('VSS' if self.params['bot_vss'] else 'bottom', bot_warr)
 
         top_unit_info = full_metal_dict[(nx - nx_dum - 1 if ny_core % 2 else nx_dum, ny - ny_dum - 1)]
         top_tidx = translate_layers(self.grid, hm_layer,
                                     top_unit_info[hm_layer][-1].track_id.base_index, xm_layer)
         top_warr = self.connect_to_tracks(
             top_unit_info[vm_layer][2][-1], TrackID(xm_layer, top_tidx, w_sup_xm), track_lower=lower, track_upper=upper)
-        self.add_pin('VDD' if self.params['top_vdd'] else 'top', top_warr, connect=True)
+        self.add_pin('VDD' if self.params['top_vdd'] else 'top', top_warr)
 
         # Add metal resistor between bottom and out<0>
         mres_l = self.params['mres_l']
