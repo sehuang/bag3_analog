@@ -21,3 +21,11 @@ class DrawTaps(IntFlag):
     RIGHT = 2
     NONE = ~(LEFT | RIGHT)
     BOTH = LEFT & RIGHT
+
+    @property
+    def has_left(self) -> bool:
+        return self is DrawTaps.LEFT or self is DrawTaps.BOTH
+
+    @property
+    def has_right(self) -> bool:
+        return self is DrawTaps.RIGHT or self is DrawTaps.BOTH

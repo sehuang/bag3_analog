@@ -64,14 +64,11 @@ class bag3_analog__rdac_decoder(Module):
             dictionary from parameter names to descriptions.
         """
         return dict(
-            inv_params='Inverter parameters',
-            and_params='Parameters for and_complex',
-            pg_params='Parameters for pass gate',
-            num_sel='Number of select inputs',
+            row_params='Parameters for rdac_decoder_row',
+            col_params='Parameters for rdac_decoder_col',
         )
 
-    def design(self, inv_params: Mapping[str, Any], and_params: Mapping[str, Any], pg_params: Mapping[str, Any],
-               num_sel: int) -> None:
+    def design(self, row_params: Mapping[str, Any], col_params: Mapping[str, Any]) -> None:
         """To be overridden by subclasses to design this module.
 
         This method should fill in values for all parameters in
@@ -87,29 +84,29 @@ class bag3_analog__rdac_decoder(Module):
         restore_instance()
         array_instance()
         """
+        # row decoder
+        self.instances['XROW'].design(**row_params)
+        num_sel_row: int = row_params['num_sel']
+        sel_row_suf = f'<{num_sel_row - 1}:0>'
+
+        # column decoder
+        self.instances['XCOL'].design(**col_params)
+        num_sel_col: int = col_params['num_sel']
+        sel_col_suf = f'<{num_sel_col - 1}:0>'
+
+        num_sel = num_sel_row + num_sel_col
         sel_suf = f'<{num_sel - 1}:0>'
-        self.instances['XINV'].design(**inv_params)
-        self.rename_instance('XINV', f'XINV{sel_suf}', [('in', f'sel{sel_suf}'), ('out', f'selb{sel_suf}')])
         self.rename_pin('sel', f'sel{sel_suf}')
 
         num_in = 1 << num_sel
         in_suf = f'<{num_in - 1}:0>'
-        self.instances['XPG'].design(**pg_params)
-        self.rename_instance('XPG', f'XPG{in_suf}', [('s', f'in{in_suf}'), ('d', f'pg_out{in_suf}'),
-                                                     ('en', f'en{in_suf}'), ('enb', f'enb{in_suf}')])
         self.rename_pin('in', f'in{in_suf}')
 
-        self.instances['XCS'].design(nin=num_in)
-        self.reconnect_instance_terminal('XCS', f'in{in_suf}', f'pg_out{in_suf}')
+        num_rows = 1 << num_sel_row
+        row_suf = f'<{num_rows - 1}:0>'
 
-        and_config = []
-        for idx in range(num_in):
-            bin_idx = f'{idx:0b}'.zfill(num_sel)
-            in_list = []
-            for char_idx, bin_char in enumerate(bin_idx):
-                sel_idx = num_sel - 1 - char_idx
-                in_list.append(f'sel<{sel_idx}>' if bin_char == '1' else f'selb<{sel_idx}>')
-            term_list = [('out', f'en<{idx}>'), ('outb', f'enb<{idx}>'), (f'in{sel_suf}', ','.join(in_list))]
-            and_config.append((f'XAND{idx}', term_list))
-        self.instances['XAND'].design(**and_params)
-        self.array_instance('XAND', inst_term_list=and_config, dx=0, dy=250)
+        self.reconnect_instance('XROW', [(f'in{row_suf}', f'mid{row_suf}'),
+                                         (f'sel{sel_row_suf}', f'sel<{num_sel - 1}:{num_sel_col}>')])
+
+        self.reconnect_instance('XCOL', [(f'in{in_suf}', f'in{in_suf}'), (f'out{row_suf}', f'mid{row_suf}'),
+                                         (f'sel{sel_col_suf}', f'sel{sel_col_suf}')])

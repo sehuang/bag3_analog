@@ -85,7 +85,9 @@ class bag3_analog__rdac(Module):
         array_instance()
         """
         self.instances['XDEC'].design(**dec_params)
-        num_sel: int = dec_params['num_sel']
+        num_sel_row: int = dec_params['row_params']['num_sel']
+        num_sel_col: int = dec_params['col_params']['num_sel']
+        num_sel = num_sel_col + num_sel_row
         sel_pin = f'sel<{num_sel - 1}:0>'
         self.rename_pin('sel', sel_pin)
         num_in = 1 << num_sel

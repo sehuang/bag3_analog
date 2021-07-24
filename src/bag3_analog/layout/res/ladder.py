@@ -56,6 +56,11 @@ class ResLadder(ResArrayBase):
     def __init__(self, temp_db: TemplateDB, params: Param, **kwargs: Any) -> None:
         ResArrayBase.__init__(self, temp_db, params, **kwargs)
         self._sup_name = ''
+        self._core_coord0 = 0
+
+    @property
+    def core_coord0(self) -> int:
+        return self._core_coord0
 
     @classmethod
     def get_schematic_class(cls) -> Optional[Type[Module]]:
@@ -100,6 +105,9 @@ class ResLadder(ResArrayBase):
         self._connect_supplies_and_substrate(full_metal_dict)
         mres_info = self._connect_top(full_metal_dict)
 
+        ny_dum: int = self.params['ny_dum']
+        self._core_coord0 = pinfo.height * ny_dum
+
         self.sch_params = dict(
             w=pinfo.w_res,
             l=pinfo.l_res,
@@ -107,7 +115,7 @@ class ResLadder(ResArrayBase):
             nx=pinfo.nx,
             ny=pinfo.ny,
             nx_dum=self.params['nx_dum'],
-            ny_dum=self.params['ny_dum'],
+            ny_dum=ny_dum,
             top_vdd=self.params['top_vdd'],
             bot_vss=self.params['bot_vss'],
             sup_name=self._sup_name,
