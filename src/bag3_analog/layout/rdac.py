@@ -1,4 +1,4 @@
-"""This module combines res_ladder and rdac_ladder."""
+"""This module combines res_ladder and rdac_decoder."""
 
 from typing import Mapping, Any, Optional, Type
 
@@ -8,7 +8,7 @@ from bag.layout.template import TemplateDB, TemplateBase
 from bag.layout.routing.base import TrackID, TrackManager, WDictType, SpDictType
 
 from pybag.core import Transform, BBox
-from pybag.enum import MinLenMode, RoundMode, Direction
+from pybag.enum import MinLenMode, RoundMode, Direction, Orientation
 
 from xbase.layout.mos.top import GenericWrapper
 from xbase.layout.array.top import ArrayBaseWrapper
@@ -36,7 +36,12 @@ class RDAC(TemplateBase):
             tr_spaces='Track spaces specifications for track manager',
             res_params='Parameters for res_ladder',
             dec_params='Parameters for rdac_decoder',
+            num_dec='Number of decoders for one res_ladder',
         )
+
+    @classmethod
+    def get_default_param_values(cls) -> Mapping[str, Any]:
+        return dict(num_dec=1)
 
     def draw_layout(self) -> None:
         # make master
@@ -45,6 +50,7 @@ class RDAC(TemplateBase):
                                                                      params=res_params))
         res_core: ResLadder = res_master.core
 
+        num_dec: int = self.params['num_dec']
         dec_params: Mapping[str, Any] = self.params['dec_params']
         dec_master = self.new_template(GenericWrapper, params=dict(cls_name=RDACDecoder.get_qualified_name(),
                                                                    params=dec_params))
@@ -66,13 +72,25 @@ class RDAC(TemplateBase):
         dec_w, dec_h = dec_master.bound_box.w, dec_master.bound_box.h
         dec_coord0 = dec_core.pg_coord0
         w_pitch, h_pitch = self.grid.get_size_pitch(xxm_layer)
-        tot_w = res_w + dec_w
+        tot_w = res_w + num_dec * dec_w
         assert res_coord0 < dec_coord0, 'These generator assumes RDACDecoder passgates start higher than ' \
                                         'ResLadder core.'
 
-        dec_inst = self.add_instance(dec_master, xform=Transform(dx=res_w))
+        if num_dec == 2:
+            dec1_inst = self.add_instance(dec_master, xform=Transform(dx=dec_w, mode=Orientation.MY))
+            start_x = dec_w
+            dec_list = [dec1_inst]
+        elif num_dec == 1:
+            dec1_inst = None
+            start_x = 0
+            dec_list = []
+        else:
+            raise ValueError(f'num_dec={num_dec} is not supported yet. Use 1 or 2.')
+
+        dec0_inst = self.add_instance(dec_master, xform=Transform(dx=start_x + res_w))
+        dec_list.append(dec0_inst)
         off_y = dec_coord0 - res_coord0 - 2 * h_pitch  # TODO: hack to make resistor array align with passgate array
-        res_inst = self.add_instance(res_master, xform=Transform(dy=off_y))
+        res_inst = self.add_instance(res_master, xform=Transform(dx=start_x, dy=off_y))
         tot_h = max(dec_h, res_h + off_y)
 
         self.set_size_from_bound_box(xxm_layer, BBox(0, 0, tot_w, tot_h), round_up=True)
@@ -80,19 +98,31 @@ class RDAC(TemplateBase):
         # --- Routing --- #
         # select signals
         for idx in range(num_sel):
-            self.reexport(dec_inst.get_port(f'sel<{idx}>'))
+            if num_dec == 2:
+                self.reexport(dec0_inst.get_port(f'sel<{idx}>'), net_name=f'sel0<{idx}>')
+                self.reexport(dec1_inst.get_port(f'sel<{idx}>'), net_name=f'sel1<{idx}>')
+            else:  # num_dec == 1
+                self.reexport(dec0_inst.get_port(f'sel<{idx}>'))
 
         # output
-        self.reexport(dec_inst.get_port('out'))
+        if num_dec == 2:
+            self.reexport(dec0_inst.get_port('out'), net_name='out0')
+            self.reexport(dec1_inst.get_port('out'), net_name='out1')
+        else:  # num_dec == 1:
+            self.reexport(dec0_inst.get_port('out'))
 
         # res_ladder output to rdac_decoder input
         for idx in range(num_in):
-            self.connect_bbox_to_track_wires(Direction.LOWER, vm_lp, dec_inst.get_pin(f'in<{idx}>'),
+            self.connect_bbox_to_track_wires(Direction.LOWER, vm_lp, dec0_inst.get_pin(f'in<{idx}>'),
                                              res_inst.get_pin(f'out<{idx}>'))
+            if num_dec == 2:
+                self.connect_bbox_to_track_wires(Direction.LOWER, vm_lp, dec1_inst.get_pin(f'in<{idx}>'),
+                                                 res_inst.get_pin(f'out<{idx}>'))
 
         # supplies
-        self.reexport(dec_inst.get_port('VDD'), connect=True)
-        self.reexport(dec_inst.get_port('VSS'), connect=True)
+        for _dec_inst in dec_list:
+            self.reexport(_dec_inst.get_port('VDD'), connect=True)
+            self.reexport(_dec_inst.get_port('VSS'), connect=True)
         # get res supplies on xxm_layer
         res_vss_xm = res_inst.get_all_port_pins('VSS')
         res_vdd_xm = res_inst.get_all_port_pins('VDD')
@@ -118,4 +148,5 @@ class RDAC(TemplateBase):
         self.sch_params = dict(
             res_params=res_master.sch_params,
             dec_params=dec_master.sch_params,
+            num_dec=num_dec,
         )

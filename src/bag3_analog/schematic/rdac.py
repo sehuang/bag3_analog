@@ -39,6 +39,8 @@ from bag.design.module import Module
 from bag.design.database import ModuleDB
 from bag.util.immutable import Param
 
+from pybag.enum import TermType
+
 
 # noinspection PyPep8Naming
 class bag3_analog__rdac(Module):
@@ -66,9 +68,14 @@ class bag3_analog__rdac(Module):
         return dict(
             res_params='Parameters for res_ladder',
             dec_params='Parameters for rdac_decoder',
+            num_dec='Number of decoders for one res_ladder',
         )
 
-    def design(self, res_params: Mapping[str, Any], dec_params: Mapping[str, Any]) -> None:
+    @classmethod
+    def get_default_param_values(cls) -> Mapping[str, Any]:
+        return dict(num_dec=1)
+
+    def design(self, res_params: Mapping[str, Any], dec_params: Mapping[str, Any], num_dec: int) -> None:
         """To be overridden by subclasses to design this module.
 
         This method should fill in values for all parameters in
@@ -88,12 +95,30 @@ class bag3_analog__rdac(Module):
         num_sel_row: int = dec_params['row_params']['num_sel']
         num_sel_col: int = dec_params['col_params']['num_sel']
         num_sel = num_sel_col + num_sel_row
-        sel_pin = f'sel<{num_sel - 1}:0>'
-        self.rename_pin('sel', sel_pin)
+        sel_suf = f'<{num_sel - 1}:0>'
         num_in = 1 << num_sel
         in_suf = f'<{num_in - 1}:0>'
         in_term = f'in{in_suf}'
-        self.reconnect_instance('XDEC', [(sel_pin, sel_pin), (in_term, in_term)])
+        sel_pin = f'sel{sel_suf}'
+
+        if num_dec == 2:
+            sel0_pin = f'sel0{sel_suf}'
+            sel1_pin = f'sel1{sel_suf}'
+            self.rename_pin('sel', sel0_pin)
+            self.add_pin(sel1_pin, TermType.input)
+
+            self.rename_pin('out', 'out0')
+            self.add_pin('out1', TermType.output)
+
+            self.array_instance('XDEC', inst_term_list=[('XDEC0', [(sel_pin, sel0_pin), (in_term, in_term),
+                                                                   ('out', 'out0')]),
+                                                        ('XDEC1', [(sel_pin, sel1_pin), (in_term, in_term),
+                                                                   ('out', 'out1')])])
+        elif num_dec == 1:
+            self.rename_pin('sel', sel_pin)
+            self.reconnect_instance('XDEC', [(sel_pin, sel_pin), (in_term, in_term)])
+        else:
+            raise ValueError(f'num_dec={num_dec} is not supported yet. Use 1 or 2.')
 
         self.instances['XRES'].design(**res_params)
         self.reconnect_instance('XRES', [(f'out{in_suf}', in_term), ('VDD', 'VDD'), ('VSS', 'VSS')])
