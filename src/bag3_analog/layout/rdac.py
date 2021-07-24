@@ -71,7 +71,7 @@ class RDAC(TemplateBase):
                                         'ResLadder core.'
 
         dec_inst = self.add_instance(dec_master, xform=Transform(dx=res_w))
-        off_y = dec_coord0 - res_coord0 - h_pitch  # TODO: hack
+        off_y = dec_coord0 - res_coord0 - 2 * h_pitch  # TODO: hack to make resistor array align with passgate array
         res_inst = self.add_instance(res_master, xform=Transform(dy=off_y))
         tot_h = max(dec_h, res_h + off_y)
 
