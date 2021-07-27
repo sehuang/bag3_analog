@@ -30,7 +30,7 @@
 
 # -*- coding: utf-8 -*-
 
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Tuple, Union
 
 import pkg_resources
 from pathlib import Path
@@ -68,7 +68,7 @@ class bag3_analog__high_pass_diff(Module):
             w='unit resistor width, in resolution units',
             intent='resistor type.',
             nser='number of resistors in series in a branch.',
-            ndum='number of dummy resistors.',
+            ndum='number of dummy resistors (parallel, series).',
             res_in_info='input metal resistor information.',
             res_out_info='output metal resistor information.',
             sub_name='substrate name. Empty string to disable.',
@@ -84,7 +84,7 @@ class bag3_analog__high_pass_diff(Module):
             extracted=False,
         )
 
-    def design(self, l: int, w: int, intent: str, nser: int, ndum: int,
+    def design(self, l: int, w: int, intent: str, nser: int, ndum: Union[int, Tuple[int, int]],
                res_in_info: Tuple[int, int, int], res_out_info: Tuple[int, int, int], sub_name: str,
                cap_val: float, extracted: bool) -> None:
         """"""
@@ -101,11 +101,14 @@ class bag3_analog__high_pass_diff(Module):
 
         # Design dummy resistors
         dummy_info = [('XRESPD', 'biasp'), ('XRESND', 'biasn')]
+        if isinstance(ndum, int):
+            ndum = (ndum, 1)
+        ndum_par, ndum_ser = ndum
         for name, bias in dummy_info:
             if not ndum:
                 self.remove_instance(name)
             else:
-                self.design_resistor(name, unit_params, 1, ndum, bias, bias, bulk=sub_name)
+                self.design_resistor(name, unit_params, ndum_ser, ndum_par, bias, bias, f'{bias}_dum_x', bulk=sub_name)
 
         # Design capacitors
         if extracted:
