@@ -78,7 +78,8 @@ class bag3_analog__res_ladder(Module):
                             inst_term_list=[(f'XRESC', []), (f'XRES_DUM', [])], dx=0, dy=-200)
 
         # Array the core
-        self.rename_instance('XRESC', f'XRES<{ncore - 1}:0>', [('PLUS', f'VDD,out<{ncore - 1}:1>'),
+        top_name = 'VDD' if top_vdd else 'top'
+        self.rename_instance('XRESC', f'XRES<{ncore - 1}:0>', [('PLUS', f'{top_name},out<{ncore - 1}:1>'),
                                                                ('MINUS', f'out<{ncore - 1}:0>'), ('BULK', sup_name)])
 
         # Array the dummies
