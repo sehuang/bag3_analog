@@ -89,7 +89,7 @@ class RDAC(TemplateBase):
 
         dec0_inst = self.add_instance(dec_master, xform=Transform(dx=start_x + res_w))
         dec_list.append(dec0_inst)
-        off_y = dec_coord0 - res_coord0 - 2 * h_pitch  # TODO: hack to make resistor array align with passgate array
+        off_y = dec_coord0 - res_coord0 - h_pitch  # TODO: hack to make resistor array align with passgate array
         res_inst = self.add_instance(res_master, xform=Transform(dx=start_x, dy=off_y))
         tot_h = max(dec_h, res_h + off_y)
 
