@@ -29,18 +29,28 @@
 
 """Some shared layout utility functions"""
 
-from typing import Any, Dict, List, Optional, Type, cast, Iterable, Union, Tuple
-
-from pybag.enum import RoundMode, Direction, Orientation
-from pybag.core import Transform, BBox
-
 from bag.typing import TrackType
-from bag.util.immutable import Param
-from bag.layout.routing.base import TrackID, WireArray
 from bag.layout.routing.grid import RoutingGrid
-from bag.layout.template import TemplateDB
+from bag.layout.template import TemplateBase
+from bag.util.search import BinaryIterator
+
+from pybag.enum import RoundMode
 
 
 def translate_layers(grid: RoutingGrid, lay0: int, tidx: TrackType, lay1: int, mode=RoundMode.NEAREST):
     coord = grid.track_to_coord(lay0, tidx)
     return grid.coord_to_track(lay1, coord, mode)
+
+
+def find_track_width(cls: TemplateBase, layer_id: int, width: int) -> int:
+    bin_iter = BinaryIterator(low=1)
+    while bin_iter.has_next():
+        cur = bin_iter.get_next()
+        cur_width = cls.grid.get_wire_total_width(layer_id, cur)
+        if cur_width == width:
+            return cur
+        if cur_width < width:
+            bin_iter.up()
+        else:  # cur_width > width
+            bin_iter.down()
+    raise ValueError(f'Cannot find track width for width={width} on layer={layer_id}.')

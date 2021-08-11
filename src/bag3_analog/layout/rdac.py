@@ -8,13 +8,14 @@ from bag.layout.template import TemplateDB, TemplateBase
 from bag.layout.routing.base import TrackID, TrackManager, WDictType, SpDictType
 
 from pybag.core import Transform, BBox
-from pybag.enum import MinLenMode, RoundMode, Direction, Orientation
+from pybag.enum import MinLenMode, RoundMode, Direction, Orientation, PinMode
 
 from xbase.layout.mos.top import GenericWrapper
 from xbase.layout.array.top import ArrayBaseWrapper
 
 from .res.ladder import ResLadder
 from .rdac_decoder import RDACDecoder
+from .util import find_track_width
 from ..schematic.rdac import bag3_analog__rdac
 
 
@@ -96,20 +97,37 @@ class RDAC(TemplateBase):
         self.set_size_from_bound_box(xxm_layer, BBox(0, 0, tot_w, tot_h), round_up=True)
 
         # --- Routing --- #
-        # select signals
+        # export select signals as WireArrays
+        _sel: BBox = dec0_inst.get_pin('sel<0>')
+        w_sel_vm = find_track_width(self, vm_layer, _sel.w)
         for idx in range(num_sel):
+            _sel0: BBox = dec0_inst.get_pin(f'sel<{idx}>')
+            _vm_tidx0 = self.grid.coord_to_track(vm_layer, _sel0.xm)
+            _sel0_warr = self.add_wires(vm_layer, _vm_tidx0, lower=0, upper=_sel0.yh, width=w_sel_vm)
             if num_dec == 2:
-                self.reexport(dec0_inst.get_port(f'sel<{idx}>'), net_name=f'sel0<{idx}>')
-                self.reexport(dec1_inst.get_port(f'sel<{idx}>'), net_name=f'sel1<{idx}>')
-            else:  # num_dec == 1
-                self.reexport(dec0_inst.get_port(f'sel<{idx}>'))
+                self.add_pin(f'sel0<{idx}>', _sel0_warr, mode=PinMode.LOWER)
 
-        # output
+                _sel1: BBox = dec1_inst.get_pin(f'sel<{idx}>')
+                _vm_tidx1 = self.grid.coord_to_track(vm_layer, _sel1.xm)
+                _sel1_warr = self.add_wires(vm_layer, _vm_tidx1, lower=0, upper=_sel1.yh, width=w_sel_vm)
+                self.add_pin(f'sel1<{idx}>', _sel1_warr, mode=PinMode.LOWER)
+            else:  # num_dec == 1
+                self.add_pin(f'sel<{idx}>', _sel0_warr, mode=PinMode.LOWER)
+
+        # export output as WireArray
+        _out0: BBox = dec0_inst.get_pin('out')
+        w_out_ym = find_track_width(self, ym_layer, _out0.w)
+        _ym_tidx0 = self.grid.coord_to_track(ym_layer, _out0.xm)
+        _out0_warr = self.add_wires(ym_layer, _ym_tidx0, lower=_out0.yl, upper=self.bound_box.yh, width=w_out_ym)
         if num_dec == 2:
-            self.reexport(dec0_inst.get_port('out'), net_name='out0')
-            self.reexport(dec1_inst.get_port('out'), net_name='out1')
+            self.add_pin('out0', _out0_warr, mode=PinMode.UPPER)
+
+            _out1: BBox = dec1_inst.get_pin('out')
+            _ym_tidx1 = self.grid.coord_to_track(ym_layer, _out1.xm)
+            _out1_warr = self.add_wires(ym_layer, _ym_tidx1, lower=_out1.yl, upper=self.bound_box.yh, width=w_out_ym)
+            self.add_pin('out1', _out1_warr, mode=PinMode.UPPER)
         else:  # num_dec == 1:
-            self.reexport(dec0_inst.get_port('out'))
+            self.add_pin('out', _out0_warr, mode=PinMode.UPPER)
 
         # res_ladder output to rdac_decoder input
         for idx in range(num_in):
