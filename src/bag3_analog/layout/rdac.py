@@ -62,6 +62,7 @@ class RDAC(TemplateBase):
         num_in = 1 << num_sel
 
         xxm_layer = dec_core.top_layer
+        yym_layer = xxm_layer + 1
         ym_layer = xxm_layer - 1
         xm_layer = ym_layer - 1
         vm_layer = xm_layer - 1
@@ -94,7 +95,7 @@ class RDAC(TemplateBase):
         res_inst = self.add_instance(res_master, xform=Transform(dx=start_x, dy=off_y))
         tot_h = max(dec_h, res_h + off_y)
 
-        self.set_size_from_bound_box(xxm_layer, BBox(0, 0, tot_w, tot_h), round_up=True)
+        self.set_size_from_bound_box(yym_layer, BBox(0, 0, tot_w, tot_h), round_up=True)
 
         # --- Routing --- #
         # export select signals as WireArrays
@@ -137,10 +138,7 @@ class RDAC(TemplateBase):
                 self.connect_bbox_to_track_wires(Direction.LOWER, vm_lp, dec1_inst.get_pin(f'in<{idx}>'),
                                                  res_inst.get_pin(f'out<{idx}>'))
 
-        # supplies
-        for _dec_inst in dec_list:
-            self.reexport(_dec_inst.get_port('VDD'), connect=True)
-            self.reexport(_dec_inst.get_port('VSS'), connect=True)
+        # --- Supplies
         # get res supplies on xxm_layer
         res_vss_xm = res_inst.get_all_port_pins('VSS')
         res_vdd_xm = res_inst.get_all_port_pins('VDD')
@@ -159,8 +157,42 @@ class RDAC(TemplateBase):
                     _ym = self.connect_to_tracks(warr_single, tid, min_len_mode=MinLenMode.MIDDLE)
                     _xxm_tidx = self.grid.coord_to_track(xxm_layer, _ym.middle, RoundMode.NEAREST)
                     sup_xxm.append(self.connect_to_tracks(_ym, TrackID(xxm_layer, _xxm_tidx, w_sup_xxm)))
-        self.add_pin('VDD', res_vdd_xxm, connect=True)
-        self.add_pin('VSS', res_vss_xxm, connect=True)
+        # get res supplies on yym_layer
+        vdd_yym_lidx = self.grid.coord_to_track(yym_layer, res_vdd_xxm[0].lower, RoundMode.GREATER)
+        vdd_yym_ridx = self.grid.coord_to_track(yym_layer, res_vdd_xxm[0].upper, RoundMode.LESS)
+        yym_locs1 = self._tr_manager.spread_wires(yym_layer, ['sup', 'sup', 'sup'], vdd_yym_lidx, vdd_yym_ridx,
+                                                  ('sup', 'sup'))
+        w_sup_yym = self._tr_manager.get_width(yym_layer, 'sup')
+        yh = self.bound_box.yh
+        vdd_yym = [self.connect_to_tracks(res_vdd_xxm, TrackID(yym_layer, vdd_yym_lidx, w_sup_yym, 2,
+                                                               vdd_yym_ridx - vdd_yym_lidx),
+                                          track_lower=0, track_upper=yh)]
+        vss_yym = [self.connect_to_tracks(res_vss_xxm, TrackID(yym_layer, yym_locs1[1], w_sup_yym), track_lower=0,
+                                          track_upper=yh)]
+        avail_lidx = self._tr_manager.get_next_track(yym_layer, vdd_yym_lidx, 'sup', 'sup', -1)
+        avail_ridx = self._tr_manager.get_next_track(yym_layer, vdd_yym_ridx, 'sup', 'sup', 1)
+
+        # get decoder supplies on yym_layer
+        for inst in dec_list:
+            if inst.bound_box.xm > res_inst.bound_box.xm:
+                yym_ridx = self.grid.coord_to_track(yym_layer, inst.bound_box.xh, RoundMode.LESS)
+                yym_locs = self._tr_manager.spread_wires(yym_layer, ['sup', 'sup', 'sup', 'sup'], avail_ridx, yym_ridx,
+                                                         ('sup', 'sup'))
+                vss_tidx, vdd_tidx = yym_locs[0], yym_locs[1]
+            else:
+                yym_lidx = self.grid.coord_to_track(yym_layer, inst.bound_box.xl, RoundMode.GREATER)
+                yym_locs = self._tr_manager.spread_wires(yym_layer, ['sup', 'sup', 'sup', 'sup'], yym_lidx, avail_lidx,
+                                                         ('sup', 'sup'))
+                vdd_tidx, vss_tidx = yym_locs[0], yym_locs[1]
+            vdd_yym.append(self.connect_to_tracks(inst.get_pin('VDD', layer=xxm_layer),
+                                                  TrackID(yym_layer, vdd_tidx, w_sup_yym, 2, yym_locs[2] - yym_locs[0]),
+                                                  track_lower=0, track_upper=yh))
+            vss_yym.append(self.connect_to_tracks(inst.get_pin('VSS', layer=xxm_layer),
+                                                  TrackID(yym_layer, vss_tidx, w_sup_yym, 2, yym_locs[2] - yym_locs[0]),
+                                                  track_lower=0, track_upper=yh))
+
+        self.add_pin('VDD', vdd_yym, connect=True)
+        self.add_pin('VSS', vss_yym, connect=True)
 
         # set schematic parameters
         self.sch_params = dict(

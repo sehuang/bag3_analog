@@ -99,8 +99,10 @@ class RDACDecoder(MOSBase):
                                upper=self.bound_box.xh)
             self.connect_wires([col_inst.get_pin(sup, layer=xm_layer), row_inst.get_pin(sup, layer=xm_layer)], lower=0,
                                upper=self.bound_box.xh)
-            sup_xxm = self.connect_wires([col_inst.get_pin(sup, layer=xxm_layer),
-                                          row_inst.get_pin(sup, layer=xxm_layer)], lower=0, upper=self.bound_box.xh)[0]
+            sup_col = col_inst.get_pin(sup, layer=xxm_layer)
+            sup_row = row_inst.get_pin(sup, layer=xxm_layer)
+            sup_xxm = self.connect_wires([sup_col, sup_row], lower=min(0, sup_row.lower, sup_col.lower),
+                                         upper=max(self.bound_box.xh, sup_row.upper, sup_col.upper))[0]
             self.add_pin(sup, sup_xxm)
 
         # set schematic parameters
