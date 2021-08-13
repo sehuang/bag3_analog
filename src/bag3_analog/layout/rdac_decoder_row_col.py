@@ -54,6 +54,7 @@ class RDACDecoderRow(MOSBase):
         num_sel: int = self.params['num_sel']
         num_in = 1 << num_sel
         draw_taps: Union[DrawTaps, str] = self.params['draw_taps']
+        seg_tap = 4
         if isinstance(draw_taps, str):
             draw_taps = DrawTaps[draw_taps]
 
@@ -76,7 +77,7 @@ class RDACDecoderRow(MOSBase):
         and_master: AndComplexRow = self.new_template(AndComplexRow, params=and_params)
         and_ncols = and_master.num_cols
 
-        tap_ncols = self.get_tap_ncol()
+        tap_ncols = self.get_tap_ncol(seg_tap)
         tot_ncols = max(and_ncols + self.min_sep_col + pg_ncols,
                         num_sel * inv_ncols + (num_sel - 1) * self.min_sep_col) + self.min_sep_col
         if draw_taps.has_left:
@@ -93,7 +94,6 @@ class RDACDecoderRow(MOSBase):
         ym_layer = xm_layer + 1
 
         # --- Placement --- #
-        vdd_tap_list, vss_tap_list = [], []
         vdd_hm_list, vss_hm_list = [], []
 
         # tile 1 and above: place left tap, and_complex, passgate, right tap
@@ -108,12 +108,13 @@ class RDACDecoderRow(MOSBase):
         pg_out_vm_list, pg_out_ym_list = [], []
         and_in_list = and_master.nand_in_list
         for idx in range(num_in):
+            vdd_tap_list, vss_tap_list = [], []
             tile_idx = idx + 1
             if draw_taps.has_left:
-                self.add_tap(0, vdd_tap_list, vss_tap_list, tile_idx=tile_idx)
+                self.add_tap(0, vdd_tap_list, vss_tap_list, tile_idx=tile_idx, seg=seg_tap)
             cur_col = start_col
             if draw_taps.has_right:
-                self.add_tap(tot_ncols, vdd_tap_list, vss_tap_list, tile_idx=tile_idx, flip_lr=True)
+                self.add_tap(tot_ncols, vdd_tap_list, vss_tap_list, tile_idx=tile_idx, flip_lr=True, seg=seg_tap)
 
             _and = self.add_tile(and_master, tile_idx, cur_col)
             cur_col += and_ncols + self.min_sep_col
@@ -121,7 +122,9 @@ class RDACDecoderRow(MOSBase):
 
             # supply
             vdd_hm_list.append(self.connect_wires([_and.get_pin('VDD'), _pg.get_pin('VDD')])[0])
+            self.connect_to_track_wires(vdd_tap_list, vdd_hm_list[-1])
             vss_hm_list.append(self.connect_wires([_and.get_pin('VSS'), _pg.get_pin('VSS')])[0])
+            self.connect_to_track_wires(vss_tap_list, vss_hm_list[-1])
 
             # pg enable
             self.connect_wires([_and.get_pin('out'), _pg.get_pin('en')])
@@ -176,17 +179,19 @@ class RDACDecoderRow(MOSBase):
         self.add_pin('out', out_ym, mode=PinMode.UPPER)
 
         # tile 0: left tap, inverters, right tap
+        vdd_tap_list, vss_tap_list = [], []
+        vdd_hm_list0, vss_hm_list0 = [], []
         if draw_taps.has_left:
-            self.add_tap(0, vdd_tap_list, vss_tap_list, tile_idx=0)
+            self.add_tap(0, vdd_tap_list, vss_tap_list, tile_idx=0, seg=seg_tap)
         if draw_taps.has_right:
-            self.add_tap(tot_ncols, vdd_tap_list, vss_tap_list, tile_idx=0, flip_lr=True)
+            self.add_tap(tot_ncols, vdd_tap_list, vss_tap_list, tile_idx=0, flip_lr=True, seg=seg_tap)
 
         cur_col = start_col
         for idx in range(num_sel):
             _master = inv_master_o if (idx & 1) else inv_master_e
             _inv = self.add_tile(_master, 0, cur_col)
-            vdd_hm_list.append(_inv.get_pin('VDD'))
-            vss_hm_list.append(_inv.get_pin('VSS'))
+            vdd_hm_list0.append(_inv.get_pin('VDD'))
+            vss_hm_list0.append(_inv.get_pin('VSS'))
 
             sel_hm_list[idx].append(_inv.get_pin('nin'))
             sel_vm = self.connect_to_tracks(sel_hm_list[idx], TrackID(vm_layer, sel_vm_locs[idx], w_sig_vm),
@@ -197,10 +202,14 @@ class RDACDecoderRow(MOSBase):
                                    track_lower=0, track_upper=self.bound_box.yh)
 
             cur_col += inv_ncols + self.min_sep_col
+        vss_hm_list.append(self.connect_wires(vss_hm_list0)[0])
+        self.connect_to_track_wires(vss_tap_list, vss_hm_list[-1])
+        vdd_hm_list.append(self.connect_wires(vdd_hm_list0)[0])
+        self.connect_to_track_wires(vdd_tap_list, vdd_hm_list[-1])
 
         # --- Routing --- #
         # supply
-        route_supplies(self, vdd_tap_list, vss_tap_list, vdd_hm_list, vss_hm_list, self.bound_box.xh, draw_taps)
+        route_supplies(self, vdd_hm_list, vss_hm_list, self.bound_box.xh, draw_taps)
 
         self.sch_params = dict(
             inv_params=inv_master_e.sch_params,
@@ -242,6 +251,7 @@ class RDACDecoderCol(MOSBase):
         num_sel: int = self.params['num_sel']
         num_cols = 1 << num_sel
         num_rows: int = self.params['num_rows']
+        seg_tap = 4
 
         # make masters
         pd0_tidx = self.get_track_index(1, MOSWireType.DS, 'sig', 0)
@@ -266,19 +276,21 @@ class RDACDecoderCol(MOSBase):
         tot_ntiles = and_ntiles + num_rows
         self._pg_tile0 = and_ntiles
 
-        tap_ncols = self.get_tap_ncol()
+        tap_ncols = self.get_tap_ncol(seg_tap)
 
         hm_layer = self.conn_layer + 1
         vm_layer = hm_layer + 1
         xm_layer = vm_layer + 1
 
         # --- Placement --- #
-        vdd_tap_list, vss_tap_list = [], []
-        vdd_hm_list, vss_hm_list = [], []
+        vdd_tap_list = [[] for _ in range(tot_ntiles)]
+        vss_tap_list = [[] for _ in range(tot_ntiles)]
+        vdd_hm_list = [[] for _ in range(tot_ntiles)]
+        vss_hm_list = [[] for _ in range(tot_ntiles)]
 
         # left tap
         for tile_idx in range(tot_ntiles):
-            self.add_tap(0, vdd_tap_list, vss_tap_list, tile_idx=tile_idx)
+            self.add_tap(0, vdd_tap_list[tile_idx], vss_tap_list[tile_idx], tile_idx=tile_idx, seg=seg_tap)
 
         # column: and_col with passgates
         cur_col = tap_ncols + self.sub_sep_col + self.min_sep_col // 2
@@ -291,8 +303,11 @@ class RDACDecoderCol(MOSBase):
             _and = self.add_tile(and_master, 0, cur_col)
 
             # and_complex supplies
-            vdd_hm_list.extend(_and.get_all_port_pins('VDD'))
-            vss_hm_list.extend(_and.get_all_port_pins('VSS'))
+            _and_vdd = _and.get_all_port_pins('VDD')
+            _and_vss = _and.get_all_port_pins('VSS')
+            for _tidx in range(and_ntiles):
+                vdd_hm_list[_tidx].append(_and_vdd[_tidx // 2])
+                vss_hm_list[_tidx].append(_and_vss[-(-_tidx // 2)])
 
             # sel and selb
             bin_idx = f'{col_idx:0b}'.zfill(num_sel)
@@ -309,11 +324,12 @@ class RDACDecoderCol(MOSBase):
 
             en_list, enb_list = [], []
             for row_idx in range(num_rows):
-                _pg = self.add_tile(pg_master, and_ntiles + row_idx, cur_col)
+                _tidx = and_ntiles + row_idx
+                _pg = self.add_tile(pg_master, _tidx, cur_col)
 
                 # passgate supplies
-                vdd_hm_list.append(_pg.get_pin('VDD'))
-                vss_hm_list.append(_pg.get_pin('VSS'))
+                vdd_hm_list[_tidx].append(_pg.get_pin('VDD'))
+                vss_hm_list[_tidx].append(_pg.get_pin('VSS'))
 
                 # passgate outputs
                 pg_nd_list[row_idx].append(_pg.get_pin('nd'))
@@ -353,13 +369,13 @@ class RDACDecoderCol(MOSBase):
                 _inv = self.add_tile(_master, tile_idx, inv_col)
 
                 # supplies
-                vdd_hm_list.append(_inv.get_pin('VDD'))
-                vss_hm_list.append(_inv.get_pin('VSS'))
+                vdd_hm_list[tile_idx].append(_inv.get_pin('VDD'))
+                vss_hm_list[tile_idx].append(_inv.get_pin('VSS'))
 
                 # get xm_layer wires
                 if len(xm_locs) == 0:
-                    vdd_ym = vdd_hm_list[-1].bound_box.ym
-                    vss_ym = vss_hm_list[-1].bound_box.ym
+                    vdd_ym = vdd_hm_list[tile_idx][-1].bound_box.ym
+                    vss_ym = vss_hm_list[tile_idx][-1].bound_box.ym
                     top_sup_tidx = self.grid.coord_to_track(xm_layer, max(vss_ym, vdd_ym), RoundMode.NEAREST)
                     bot_sup_tidx = self.grid.coord_to_track(xm_layer, min(vss_ym, vdd_ym), RoundMode.NEAREST)
                     xm_locs = self.tr_manager.spread_wires(xm_layer, ['sup'] + ['sig'] * 2 * and_in + ['sup'],
@@ -389,7 +405,8 @@ class RDACDecoderCol(MOSBase):
 
         # right tap
         for tile_idx in range(tot_ntiles):
-            self.add_tap(tot_ncols, vdd_tap_list, vss_tap_list, tile_idx=tile_idx, flip_lr=True)
+            self.add_tap(tot_ncols, vdd_tap_list[tile_idx], vss_tap_list[tile_idx], tile_idx=tile_idx, flip_lr=True,
+                         seg=seg_tap)
         self.set_mos_size()
 
         # --- Routing --- #
@@ -401,7 +418,13 @@ class RDACDecoderCol(MOSBase):
                          connect=True, mode=PinMode.UPPER)
 
         # supply
-        route_supplies(self, vdd_tap_list, vss_tap_list, vdd_hm_list, vss_hm_list, self.bound_box.xh)
+        vdd_hm, vss_hm = [], []
+        for _tidx in range(tot_ntiles):
+            vss_hm.append(self.connect_wires(vss_hm_list[_tidx])[0])
+            self.connect_to_track_wires(vss_tap_list[_tidx], vss_hm[-1])
+            vdd_hm.append(self.connect_wires(vdd_hm_list[_tidx])[0])
+            self.connect_to_track_wires(vdd_tap_list[_tidx], vdd_hm[-1])
+        route_supplies(self, vdd_hm, vss_hm, self.bound_box.xh)
 
         self.sch_params = dict(
             inv_params=inv_master_e.sch_params,
@@ -413,11 +436,10 @@ class RDACDecoderCol(MOSBase):
         )
 
 
-def route_supplies(cls: MOSBase, vdd_tap_list: Sequence[WireArray], vss_tap_list: Sequence[WireArray],
-                   vdd_hm_list: Sequence[WireArray], vss_hm_list: Sequence[WireArray], xh: int,
+def route_supplies(cls: MOSBase, vdd_hm_list: Sequence[WireArray], vss_hm_list: Sequence[WireArray], xh: int,
                    draw_taps: DrawTaps = DrawTaps.BOTH) -> None:
-    vdd_hm = cls.connect_wires(cls.connect_to_track_wires(vdd_tap_list, vdd_hm_list), lower=0, upper=xh)[0]
-    vss_hm = cls.connect_wires(cls.connect_to_track_wires(vss_tap_list, vss_hm_list), lower=0, upper=xh)[0]
+    vdd_hm = cls.connect_wires(vdd_hm_list, lower=0, upper=xh)[0]
+    vss_hm = cls.connect_wires(vss_hm_list, lower=0, upper=xh)[0]
     vdd_pin_list = [vdd_hm]
     vss_pin_list = [vss_hm]
 
