@@ -15,7 +15,6 @@ from xbase.layout.array.top import ArrayBaseWrapper
 
 from .res.ladder import ResLadder
 from .rdac_decoder import RDACDecoder
-from .util import find_track_width
 from ..schematic.rdac import bag3_analog__rdac
 
 
@@ -100,7 +99,7 @@ class RDAC(TemplateBase):
         # --- Routing --- #
         # export select signals as WireArrays
         _sel: BBox = dec0_inst.get_pin('sel<0>')
-        w_sel_vm = find_track_width(self, vm_layer, _sel.w)
+        w_sel_vm = self.find_track_width(vm_layer, _sel.w)
         for idx in range(num_sel):
             _sel0: BBox = dec0_inst.get_pin(f'sel<{idx}>')
             _vm_tidx0 = self.grid.coord_to_track(vm_layer, _sel0.xm)
@@ -117,7 +116,7 @@ class RDAC(TemplateBase):
 
         # export output as WireArray
         _out0: BBox = dec0_inst.get_pin('out')
-        w_out_ym = find_track_width(self, ym_layer, _out0.w)
+        w_out_ym = self.find_track_width(ym_layer, _out0.w)
         _ym_tidx0 = self.grid.coord_to_track(ym_layer, _out0.xm)
         _out0_warr = self.add_wires(ym_layer, _ym_tidx0, lower=_out0.yl, upper=self.bound_box.yh, width=w_out_ym)
         if num_dec == 2:

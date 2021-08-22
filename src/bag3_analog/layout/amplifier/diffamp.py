@@ -23,6 +23,7 @@ from bag.typing import TrackType
 from bag.util.immutable import Param
 from bag.layout.template import TemplateDB
 from bag.layout.routing.base import TrackID, WireArray
+from bag.layout.enum import DrawTaps
 from bag.util.math import HalfInt
 from bag.design.module import Module
 
@@ -32,7 +33,6 @@ from xbase.layout.mos.guardring import GuardRing
 
 from bag3_digital.layout.stdcells.gates import InvChainCore
 
-from ...enum import DrawTaps
 from ...schematic.diffamp_self_biased import bag3_analog__diffamp_self_biased
 from ...schematic.diffamp_self_biased_buffer import bag3_analog__diffamp_self_biased_buffer
 

@@ -7,10 +7,10 @@ from pybag.enum import PinMode
 from bag.util.immutable import Param
 from bag.design.module import Module
 from bag.layout.template import TemplateDB
+from bag.layout.enum import DrawTaps
 
 from xbase.layout.mos.base import MOSBasePlaceInfo, MOSBase
 
-from ..enum import DrawTaps
 from .rdac_decoder_row_col import RDACDecoderRow, RDACDecoderCol
 from ..schematic.rdac_decoder import bag3_analog__rdac_decoder
 

@@ -103,7 +103,7 @@ class RDACMeas(MeasurementManager):
             if x_dnl is None:
                 num_dnl = len(out_dnl)
                 x_dnl = np.linspace(1, num_dnl, num_dnl)
-            ax1.plot(x_dnl, out_dnl, label=pvt)
+            ax1.stem(x_dnl, out_dnl, label=pvt, use_line_collection=True)
         ax0.legend()
         ax1.legend()
         plt.tight_layout()

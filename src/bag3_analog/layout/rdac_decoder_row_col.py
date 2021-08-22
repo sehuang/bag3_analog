@@ -8,6 +8,7 @@ from bag.util.immutable import Param
 from bag.design.module import Module
 from bag.layout.template import TemplateDB
 from bag.layout.routing.base import TrackID, WireArray
+from bag.layout.enum import DrawTaps
 
 from xbase.layout.enum import MOSWireType
 from xbase.layout.mos.base import MOSBasePlaceInfo, MOSBase
@@ -15,7 +16,6 @@ from xbase.layout.mos.base import MOSBasePlaceInfo, MOSBase
 from bag3_digital.layout.stdcells.gates import InvCore, PassGateCore
 from bag3_digital.layout.stdcells.and_complex import AndComplexRow, AndComplexCol
 
-from ..enum import DrawTaps
 from ..schematic.rdac_decoder_row_col import bag3_analog__rdac_decoder_row_col
 
 
