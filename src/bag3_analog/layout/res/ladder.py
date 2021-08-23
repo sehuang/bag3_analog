@@ -152,11 +152,11 @@ class ResLadder(ResArrayBase):
                                           lower, upper, sp_type=('sup', 'sig'), alignment=0)
 
         # Determine x-dimensions for hm_layer
-        ext_x, ext_y = self.grid.get_via_extensions(Direction.LOWER, hm_layer, 1, 1)
-        vm_w = self.grid.get_track_info(vm_layer).width
+        ext_x, ext_y = self.grid.get_via_extensions(Direction.LOWER, hm_layer, w_sig_hm, w_sig_vm)
+        vm_w = self.grid.get_wire_total_width(vm_layer, w_sig_vm)
         vm_w2 = vm_w // 2
         ext_x += vm_w2
-        hm_w = self.grid.get_track_info(hm_layer).width
+        hm_w = self.grid.get_wire_total_width(hm_layer, w_sig_hm)
         ext_y += hm_w // 2
 
         hm_dims = [
@@ -481,9 +481,11 @@ class ResLadder(ResArrayBase):
 
         # Add metal resistor between bottom and out<0>
         mres_l = self.params['mres_l']
-        hm_w = self.grid.get_track_info(hm_layer).width
-        vm_w = self.grid.get_track_info(vm_layer).width  # TODO: how to do this when tr_manager width != 1?
-        ext_x, ext_y = self.grid.get_via_extensions(Direction.LOWER, hm_layer, 1, 1)
+        w_sig_hm = tr_manager.get_width(hm_layer, 'sig')
+        hm_w = self.grid.get_wire_total_width(hm_layer, w_sig_hm)
+        w_sig_vm = tr_manager.get_width(vm_layer, 'sig')
+        vm_w = self.grid.get_wire_total_width(vm_layer, w_sig_vm)
+        ext_x, ext_y = self.grid.get_via_extensions(Direction.LOWER, hm_layer, w_sig_hm, w_sig_vm)
         ref_info = full_metal_dict[(nx_dum, ny_dum)]
         xl = self.grid.track_to_coord(
             vm_layer, ref_info[vm_layer][2][0].track_id.base_index) - vm_w // 2
