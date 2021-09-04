@@ -4,7 +4,7 @@ view_name: schematic
 bbox:
   - -205
   - -504
-  - 500
+  - 520
   - 244
 terminals:
   BULK:
@@ -285,13 +285,13 @@ shapes:
     - 5
     - layer: 228
       purpose: 4294967295
-      net: midp
+      net: outp
       points:
         -
-          - 370
+          - 390
           - 140
         -
-          - 370
+          - 390
           - 180
   -
     - 5
@@ -312,10 +312,10 @@ shapes:
       net: biasp
       points:
         -
-          - 370
+          - 390
           - 40
         -
-          - 370
+          - 390
           - 80
   -
     - 7
@@ -323,7 +323,7 @@ shapes:
       purpose: 237
       net: biasp
       origin:
-        - 363
+        - 383
         - 76
       alignment: 8
       orient: R90
@@ -337,13 +337,13 @@ shapes:
     - 5
     - layer: 228
       purpose: 4294967295
-      net: midn
+      net: outn
       points:
         -
-          - 370
+          - 390
           - -60
         -
-          - 370
+          - 390
           - -20
   -
     - 7
@@ -351,7 +351,7 @@ shapes:
       purpose: 237
       net: BULK
       origin:
-        - 394
+        - 414
         - 107
       alignment: 2
       orient: R0
@@ -368,10 +368,10 @@ shapes:
       net: biasn
       points:
         -
-          - 370
+          - 390
           - -160
         -
-          - 370
+          - 390
           - -120
   -
     - 7
@@ -379,7 +379,7 @@ shapes:
       purpose: 237
       net: biasn
       origin:
-        - 363
+        - 383
         - -124
       alignment: 8
       orient: R90
@@ -396,10 +396,10 @@ shapes:
       net: BULK
       points:
         -
-          - 390
+          - 410
           - -100
         -
-          - 430
+          - 450
           - -100
   -
     - 7
@@ -407,7 +407,7 @@ shapes:
       purpose: 237
       net: BULK
       origin:
-        - 394
+        - 414
         - -93
       alignment: 2
       orient: R0
@@ -424,10 +424,10 @@ shapes:
       net: biasn
       points:
         -
-          - 370
+          - 390
           - -400
         -
-          - 370
+          - 390
           - -360
   -
     - 7
@@ -435,7 +435,7 @@ shapes:
       purpose: 237
       net: biasn
       origin:
-        - 363
+        - 383
         - -370
       alignment: 5
       orient: R90
@@ -449,14 +449,14 @@ shapes:
     - 5
     - layer: 228
       purpose: 4294967295
-      net: midp
+      net: nc_outn
       points:
         -
           - 120
-          - 150
+          - -30
         -
-          - 160
-          - 150
+          - 180
+          - -30
   -
     - 5
     - layer: 228
@@ -464,16 +464,16 @@ shapes:
       net: BULK
       points:
         -
-          - 390
+          - 410
           - 100
         -
-          - 430
+          - 450
           - 100
   -
     - 5
     - layer: 228
       purpose: 4294967295
-      net: net3
+      net: nc_inp
       points:
         -
           - 0
@@ -497,35 +497,7 @@ shapes:
     - 5
     - layer: 228
       purpose: 4294967295
-      net: midn
-      points:
-        -
-          - 120
-          - -30
-        -
-          - 160
-          - -30
-  -
-    - 7
-    - layer: 228
-      purpose: 237
-      net: midp
-      origin:
-        - 363
-        - 170
-      alignment: 5
-      orient: R90
-      font: 5
-      height: 10
-      overbar: false
-      visible: true
-      drafting: true
-      text: midp
-  -
-    - 5
-    - layer: 228
-      purpose: 4294967295
-      net: net1
+      net: nc_inn
       points:
         -
           - 0
@@ -537,9 +509,37 @@ shapes:
     - 7
     - layer: 228
       purpose: 237
+      net: outp
+      origin:
+        - 383
+        - 170
+      alignment: 5
+      orient: R90
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: outp
+  -
+    - 5
+    - layer: 228
+      purpose: 4294967295
+      net: nc_outp
+      points:
+        -
+          - 120
+          - 150
+        -
+          - 180
+          - 150
+  -
+    - 7
+    - layer: 228
+      purpose: 237
       net: outn
       origin:
-        - 224
+        - 244
         - -23
       alignment: 2
       orient: R0
@@ -556,18 +556,18 @@ shapes:
       net: outn
       points:
         -
-          - 220
+          - 240
           - -30
         -
-          - 260
+          - 280
           - -30
   -
     - 7
     - layer: 228
       purpose: 237
-      net: midn
+      net: outn
       origin:
-        - 363
+        - 383
         - -30
       alignment: 5
       orient: R90
@@ -576,7 +576,7 @@ shapes:
       overbar: false
       visible: true
       drafting: true
-      text: midn
+      text: outn
   -
     - 7
     - layer: 228
@@ -599,7 +599,7 @@ shapes:
       purpose: 237
       net: outp
       origin:
-        - 224
+        - 244
         - 157
       alignment: 2
       orient: R0
@@ -616,10 +616,10 @@ shapes:
       net: biasp
       points:
         -
-          - 370
+          - 390
           - -330
         -
-          - 370
+          - 390
           - -290
   -
     - 7
@@ -627,7 +627,7 @@ shapes:
       purpose: 237
       net: biasp
       origin:
-        - 363
+        - 383
         - -294
       alignment: 8
       orient: R90
@@ -644,10 +644,10 @@ shapes:
       net: biasp
       points:
         -
-          - 370
+          - 390
           - -230
         -
-          - 370
+          - 390
           - -190
   -
     - 7
@@ -655,7 +655,7 @@ shapes:
       purpose: 237
       net: biasp
       origin:
-        - 363
+        - 383
         - -200
       alignment: 5
       orient: R90
@@ -672,10 +672,10 @@ shapes:
       net: BULK
       points:
         -
-          - 390
+          - 410
           - -270
         -
-          - 430
+          - 450
           - -270
   -
     - 7
@@ -683,7 +683,7 @@ shapes:
       purpose: 237
       net: BULK
       origin:
-        - 394
+        - 414
         - -263
       alignment: 2
       orient: R0
@@ -716,10 +716,10 @@ shapes:
       net: outp
       points:
         -
-          - 220
+          - 240
           - 150
         -
-          - 260
+          - 280
           - 150
   -
     - 5
@@ -728,10 +728,10 @@ shapes:
       net: biasn
       points:
         -
-          - 370
+          - 390
           - -500
         -
-          - 370
+          - 390
           - -460
   -
     - 7
@@ -739,7 +739,7 @@ shapes:
       purpose: 237
       net: biasn
       origin:
-        - 363
+        - 383
         - -464
       alignment: 8
       orient: R90
@@ -756,10 +756,10 @@ shapes:
       net: BULK
       points:
         -
-          - 390
+          - 410
           - -440
         -
-          - 430
+          - 450
           - -440
   -
     - 7
@@ -767,7 +767,7 @@ shapes:
       purpose: 237
       net: BULK
       origin:
-        - 394
+        - 414
         - -433
       alignment: 2
       orient: R0
@@ -781,9 +781,9 @@ shapes:
     - 7
     - layer: 228
       purpose: 237
-      net: midp
+      net: nc_outp
       origin:
-        - 140
+        - 150
         - 157
       alignment: 5
       orient: R0
@@ -792,14 +792,30 @@ shapes:
       overbar: false
       visible: true
       drafting: true
-      text: midp
+      text: nc_outp
   -
     - 7
     - layer: 228
       purpose: 237
-      net: midn
+      net: nc_inp
       origin:
-        - 140
+        - 30
+        - 157
+      alignment: 5
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: nc_inp
+  -
+    - 7
+    - layer: 228
+      purpose: 237
+      net: nc_inn
+      origin:
+        - 30
         - -23
       alignment: 5
       orient: R0
@@ -808,7 +824,23 @@ shapes:
       overbar: false
       visible: true
       drafting: true
-      text: midn
+      text: nc_inn
+  -
+    - 7
+    - layer: 228
+      purpose: 237
+      net: nc_outn
+      origin:
+        - 150
+        - -23
+      alignment: 5
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: nc_outn
 instances:
   XCAPN:
     lib_name: analogLib
@@ -824,8 +856,8 @@ instances:
       - 124
       - 64
     connections:
-      MINUS: midn
-      PLUS: net1
+      MINUS: nc_outn
+      PLUS: nc_inn
     params:
       {}
     is_primitive: true
@@ -843,8 +875,8 @@ instances:
       - 124
       - 244
     connections:
-      MINUS: midp
-      PLUS: net3
+      MINUS: nc_outp
+      PLUS: nc_inp
     params:
       {}
     is_primitive: true
@@ -862,7 +894,7 @@ instances:
       - 4
       - 64
     connections:
-      MINUS: net1
+      MINUS: nc_inn
       PLUS: inn
     params:
       l:
@@ -877,17 +909,17 @@ instances:
     cell_name: res_metal_1
     view_name: symbol
     xform:
-      - 150
+      - 170
       - -70
       - R90
     bbox:
-      - 150
+      - 170
       - -162
-      - 224
+      - 244
       - 64
     connections:
       MINUS: outn
-      PLUS: midn
+      PLUS: nc_outn
     params:
       l:
         - 3
@@ -910,7 +942,7 @@ instances:
       - 4
       - 244
     connections:
-      MINUS: net3
+      MINUS: nc_inp
       PLUS: inp
     params:
       l:
@@ -925,17 +957,17 @@ instances:
     cell_name: res_metal_1
     view_name: symbol
     xform:
-      - 150
+      - 170
       - 110
       - R90
     bbox:
-      - 150
+      - 170
       - 18
-      - 224
+      - 244
       - 244
     connections:
       MINUS: outp
-      PLUS: midp
+      PLUS: nc_outp
     params:
       l:
         - 3
@@ -949,18 +981,18 @@ instances:
     cell_name: res_standard
     view_name: symbol
     xform:
-      - 330
+      - 350
       - -50
       - R0
     bbox:
-      - 238
+      - 258
       - -124
-      - 500
+      - 520
       - -50
     connections:
       BULK: BULK
       MINUS: biasn
-      PLUS: midn
+      PLUS: outn
     params:
       l:
         - 3
@@ -974,13 +1006,13 @@ instances:
     cell_name: res_standard
     view_name: symbol
     xform:
-      - 330
+      - 350
       - -390
       - R0
     bbox:
-      - 238
+      - 258
       - -464
-      - 500
+      - 520
       - -390
     connections:
       BULK: BULK
@@ -999,18 +1031,18 @@ instances:
     cell_name: res_standard
     view_name: symbol
     xform:
-      - 330
+      - 350
       - 150
       - R0
     bbox:
-      - 238
+      - 258
       - 76
-      - 500
+      - 520
       - 150
     connections:
       BULK: BULK
       MINUS: biasp
-      PLUS: midp
+      PLUS: outp
     params:
       l:
         - 3
@@ -1024,13 +1056,13 @@ instances:
     cell_name: res_standard
     view_name: symbol
     xform:
-      - 330
+      - 350
       - -220
       - R0
     bbox:
-      - 238
+      - 258
       - -294
-      - 500
+      - 520
       - -220
     connections:
       BULK: BULK
@@ -1047,22 +1079,22 @@ instances:
 props:
   connectivityLastUpdated:
     - 0
-    - 4845
+    - 5648
   instance#:
     - 0
     - 7
   lastSchematicExtraction:
     - 4
-    - time_val: 1615958809
+    - time_val: 1630622590
   net#:
     - 0
-    - 2
+    - 0
   pin#:
     - 0
     - 8
   schGeometryLastUpdated:
     - 0
-    - 4845
+    - 5648
   schGeometryVersion:
     - 3
     - sch.ds.gm.1.4
@@ -1072,10 +1104,10 @@ props:
 app_defs:
   _dbLastSavedCounter:
     - 0
-    - 4845
+    - 5648
   _dbvCvTimeStamp:
     - 0
-    - 4845
+    - 5648
   cdbRevision:
     - 0
     - 227612

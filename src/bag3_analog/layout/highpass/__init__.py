@@ -919,7 +919,6 @@ class HighPassColumn(TemplateBase):
             threshold='the substrate threshold flavor.',
             sub_type='the substrate type.',
             # top_layer='The top layer ID',
-            nser='number of resistors in series in a branch.',
             nx_dum='Number of dummies on each side, X direction',
             ny_dum='Number of dummies on each side, Y direction',
             in_tr_info='Input track info.',
