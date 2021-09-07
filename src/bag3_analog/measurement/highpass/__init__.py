@@ -42,7 +42,7 @@ from bag.simulation.cache import SimulationDB, DesignInstance, SimResults, Measu
 from bag.design.module import Module
 from bag.concurrent.util import GatherHelper
 
-from bag3_testbenches.measurement.ac import ACTB
+from bag3_testbenches.measurement.ac.base import ACTB
 
 
 class HighpassACMeas(MeasurementManager):
@@ -125,7 +125,6 @@ class HighpassACMeas(MeasurementManager):
         plt.loglog(freq0, np.abs(zc))
         plt.grid()
         plt.show()
-        breakpoint()
 
         cc = estimate_cap(freq0, zc)
         cpi = estimate_cap(freq0, zpp)
@@ -169,7 +168,6 @@ class HighpassACMeas(MeasurementManager):
         plt.loglog(freq0, np.abs(zc))
         plt.grid()
         plt.show()
-        breakpoint()
 
         r = np.mean(zc)
         cpb = estimate_cap(freq0, zpp)
