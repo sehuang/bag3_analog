@@ -72,10 +72,13 @@ class bag3_analog__high_pass_diff(Module):
             res_in_info='input metal resistor information (None to remove).',
             res_out_info='output metal resistor information (None to remove).',
             sub_name='substrate name. Empty string to disable.',
-            connect_res_to_cap_res_metal='True to connect resistors to floating nodes of the cap\'s res_metal (instead of outp/outn)',
+            bias_diff='True for differential bias (biasp, biasn), False for common mode bias',
+            connect_res_to_cap_res_metal='True to connect resistors to floating nodes of the cap\'s res_metal '
+                                         '(instead of outp/outn)',
             connect_dum_to_sub='True to connect dummy resistor ports to substrate (instead of bias)',
-            cap_val='Schematic value for analogLib cap',
-            extracted='True if doing LVS or extraction. Removes analogLib caps'
+            cap_val='Schematic value for analogLib cap. Can specify 1 value for ideal cap, or a tuple of 4 values to '
+                    'additionally include parasitic caps at bias, input, and output nodes (in that order)',
+            extracted='True if doing LVS or extraction. Removes analogLib caps',
         )
 
     @classmethod
@@ -84,6 +87,7 @@ class bag3_analog__high_pass_diff(Module):
             res_in_info=None,
             res_out_info=None,
             sub_name='VDD',
+            bias_diff=True,
             connect_res_to_cap_res_metal=True,
             connect_dum_to_sub=False,
             cap_val=1e-9,
@@ -92,23 +96,25 @@ class bag3_analog__high_pass_diff(Module):
 
     def design(self, l: int, w: int, intent: str, nser: int, ndum: Union[int, Tuple[int, int]],
                res_in_info: Optional[Tuple[int, int, int]], res_out_info: Optional[Tuple[int, int, int]], sub_name: str,
-               connect_res_to_cap_res_metal: bool, connect_dum_to_sub: bool,
-               cap_val: float, extracted: bool) -> None:
+               bias_diff: bool, connect_res_to_cap_res_metal: bool, connect_dum_to_sub: bool,
+               cap_val: Union[float, Tuple[float, float, float, float]], extracted: bool) -> None:
         """"""
         has_res_in = res_in_info is not None
         has_res_out = res_out_info is not None
         # if res_metals are not used for cap LVS, then resistors should connect directly to outp and outn
         connect_res_to_cap_res_metal = connect_res_to_cap_res_metal and has_res_out
         res_out_conn_pfx = 'nc_' if connect_res_to_cap_res_metal else ''
+
+        if bias_diff:
+            bias_p, bias_n = 'biasp', 'biasn'
+        else:
+            self.rename_pin('biasp', 'bias')
+            self.remove_pin('biasn')
+            bias_p = bias_n = 'bias'
+
         res_name_info = (
-            ('XRESP', res_out_conn_pfx + 'outp', 'biasp'),
-            ('XRESN', res_out_conn_pfx + 'outn', 'biasn')
-        )
-        cap_in_conn_pfx = 'nc_' if has_res_in else ''
-        cap_out_conn_pfx = 'nc_' if has_res_out else ''
-        cap_name_info = (
-            ('XCAPP', cap_in_conn_pfx + 'inp', cap_out_conn_pfx + 'outp'),
-            ('XCAPN', cap_in_conn_pfx + 'inn', cap_out_conn_pfx + 'outn')
+            ('XRESP', res_out_conn_pfx + 'outp', bias_p),
+            ('XRESN', res_out_conn_pfx + 'outn', bias_n)
         )
 
         # Design resistors
@@ -118,8 +124,8 @@ class bag3_analog__high_pass_diff(Module):
 
         # Design dummy resistors
         dum_names = ['XRESPD', 'XRESND']
-        dum_conns = [sub_name] * 2 if connect_dum_to_sub else ['biasp', 'biasn']
-        dum_mid_conns_pfx = [sub_name + '_p', sub_name + '_n'] if connect_dum_to_sub else dum_conns
+        dum_conns = [sub_name] * 2 if connect_dum_to_sub else [bias_p, bias_n]
+        dum_mid_conns_pfx = [sub_name + '_p', sub_name + '_n'] if dum_conns[0] == dum_conns[1] else dum_conns
         if isinstance(ndum, int):
             ndum = (ndum, 1)
         if len(ndum) == 2:
@@ -148,13 +154,31 @@ class bag3_analog__high_pass_diff(Module):
             self.remove_instance('XMRESN2')
 
         # Design capacitors
+        cap_in_conn_pfx = 'nc_' if has_res_in else ''
+        cap_out_conn_pfx = 'nc_' if has_res_out else ''
+        cap_name_info = (
+            ('XCAPP', 'inp', 'outp', bias_p, cap_in_conn_pfx),
+            ('XCAPN', 'inn', 'outn', bias_n, cap_out_conn_pfx),
+        )
         if extracted:
             for _name_info in cap_name_info:
                 self.remove_instance(_name_info[0])
         else:
-            cap_val_str = float_to_si_string(cap_val)
-            for (inst_name, in_name, out_name) in cap_name_info:
-                self.instances[inst_name].set_param('c', cap_val_str)
-                self.reconnect_instance(inst_name, dict(PLUS=in_name, MINUS=out_name).items())
+            if isinstance(cap_val, float):
+                cap_val = (cap_val, 0, 0, 0)
+            cc, cpb, cpi, cpo = [float_to_si_string(c) for c in cap_val]
+            for (inst_name, in_name, out_name, bias_name, cc_pfx) in cap_name_info:
+                cap_info_list = [(inst_name + 'C', cc, cc_pfx + in_name, cc_pfx + out_name)]
+                if cpb != 0:
+                    cap_info_list.append((inst_name + 'PB', cpb, bias_name, sub_name))
+                if cpi != 0:
+                    cap_info_list.append((inst_name + 'PI', cpi, in_name, sub_name))
+                if cpo != 0:
+                    cap_info_list.append((inst_name + 'PO', cpo, out_name, sub_name))
+                cap_names = [cap_info[0] for cap_info in cap_info_list]
+                self.array_instance(inst_name, cap_names)
+                for (cap_name, param_val, plus_conn, minus_conn) in cap_info_list:
+                    self.instances[cap_name].set_param('c', param_val)
+                    self.reconnect_instance(cap_name, dict(PLUS=plus_conn, MINUS=minus_conn).items())
 
         self.rename_pin('BULK', sub_name)

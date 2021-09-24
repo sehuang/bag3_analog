@@ -46,6 +46,11 @@ from bag3_testbenches.measurement.ac.base import ACTB
 
 
 class HighpassACMeas(MeasurementManager):
+
+    @property
+    def bias_diff(self):
+        return self.specs.get('bias_diff', True)
+
     def get_sim_info(self, sim_db: SimulationDB, dut: DesignInstance, cur_info: MeasInfo):
         raise NotImplementedError
 
@@ -63,7 +68,7 @@ class HighpassACMeas(MeasurementManager):
             helper.append(self.async_meas_case(name, sim_dir, sim_db, dut, idx))
 
         meas_results = await helper.gather_err()
-        ans = self.compute_passives(meas_results)
+        ans = self.compute_passives(meas_results, self.bias_diff)
 
         tf_results = await self.async_meas_tf(name, sim_dir, sim_db, dut)
         plt.semilogx(tf_results['freq'], 20*np.log10(tf_results['tf']), label="Measured")
@@ -90,7 +95,7 @@ class HighpassACMeas(MeasurementManager):
         return ans
 
     @staticmethod
-    def compute_passives(meas_results: Sequence[Mapping[str, Any]]) -> Mapping[str, Any]:
+    def compute_passives(meas_results: Sequence[Mapping[str, Any]], bias_diff: bool) -> Mapping[str, Any]:
         freq0 = meas_results[0]['freq']
         freq1 = meas_results[1]['freq']
         freq2 = meas_results[2]['freq']
@@ -186,6 +191,13 @@ class HighpassACMeas(MeasurementManager):
             plt.legend()
             plt.show()
 
+        if not bias_diff:
+            r = 2 * r
+            cc = 0.5 * cc
+            cpi = 0.5 * cpi
+            cpo = 0.5 * cpo
+            cpb = 0.5 * cpb
+
         return dict(
             r=r,
             cc=cc,
@@ -196,8 +208,12 @@ class HighpassACMeas(MeasurementManager):
 
     async def async_meas_tf(self, name: str, sim_dir: Path, sim_db: SimulationDB, dut: Optional[DesignInstance]) -> Dict[str, Any]:
 
-        src_list = [dict(lib='analogLib', type='vsin', value='1m', conns={'PLUS': 'inp', 'MINUS': 'VSS'})]
-        dut_conns = dict(biasp='VSS', outp='outp', inp='inp', biasn='VSS', outn='VSS', inn='inn')
+        if self.bias_diff:
+            src_list = [dict(lib='analogLib', type='vsin', value='1m', conns={'PLUS': 'inp', 'MINUS': 'VSS'})]
+            dut_conns = dict(biasp='VSS', outp='outp', inp='inp', biasn='VSS', outn='VSS', inn='inn')
+        else:
+            src_list = [dict(lib='analogLib', type='vsin', value='1m', conns={'PLUS': 'inp', 'MINUS': 'VSS'})]
+            dut_conns = dict(bias='VSS', outp='outp', inp='inp', outn='outp', inn='inp')
 
         tbm_specs = dict(
             **self.specs['tbm_specs'],
@@ -227,20 +243,36 @@ class HighpassACMeas(MeasurementManager):
 
     async def async_meas_case(self, name: str, sim_dir: Path, sim_db: SimulationDB, dut: Optional[DesignInstance],
                               case_idx: int) -> Dict[str, Any]:
-        if case_idx == 0:
-            src_list = [dict(lib='analogLib', type='isin', value='1', conns={'PLUS': 'itestp', 'MINUS': 'itestm'})]
-            dut_conns = dict(biasp='itestm', outp='itestm', inp='itestp', biasn='VSS', outn='VSS', inn='inn')
-        elif case_idx == 1:
-            src_list = [dict(lib='analogLib', type='isin', value='1', conns={'PLUS': 'itestp', 'MINUS': 'VSS'})]
-            dut_conns = dict(biasp='itestm', outp='itestm', inp='itestp', biasn='VSS', outn='VSS', inn='inn')
-        elif case_idx == 2:
-            src_list = [dict(lib='analogLib', type='isin', value='1', conns={'PLUS': 'itestp', 'MINUS': 'itestm'})]
-            dut_conns = dict(biasp='itestp', outp='itestm', inp='itestm', biasn='VSS', outn='VSS', inn='inn')
-        elif case_idx == 3:
-            src_list = [dict(lib='analogLib', type='isin', value='1', conns={'PLUS': 'itestp', 'MINUS': 'VSS'})]
-            dut_conns = dict(biasp='itestp', outp='itestm', inp='itestm', biasn='VSS', outn='VSS', inn='inn')
+        if self.bias_diff:
+            if case_idx == 0:
+                src_list = [dict(lib='analogLib', type='isin', value='1', conns={'PLUS': 'itestp', 'MINUS': 'itestm'})]
+                dut_conns = dict(biasp='itestm', outp='itestm', inp='itestp', biasn='VSS', outn='VSS', inn='inn')
+            elif case_idx == 1:
+                src_list = [dict(lib='analogLib', type='isin', value='1', conns={'PLUS': 'itestp', 'MINUS': 'VSS'})]
+                dut_conns = dict(biasp='itestm', outp='itestm', inp='itestp', biasn='VSS', outn='VSS', inn='inn')
+            elif case_idx == 2:
+                src_list = [dict(lib='analogLib', type='isin', value='1', conns={'PLUS': 'itestp', 'MINUS': 'itestm'})]
+                dut_conns = dict(biasp='itestp', outp='itestm', inp='itestm', biasn='VSS', outn='VSS', inn='inn')
+            elif case_idx == 3:
+                src_list = [dict(lib='analogLib', type='isin', value='1', conns={'PLUS': 'itestp', 'MINUS': 'VSS'})]
+                dut_conns = dict(biasp='itestp', outp='itestm', inp='itestm', biasn='VSS', outn='VSS', inn='inn')
+            else:
+                raise ValueError(f'Invalid case_idx={case_idx}')
         else:
-            raise ValueError(f'Invalid case_idx={case_idx}')
+            if case_idx == 0:
+                src_list = [dict(lib='analogLib', type='isin', value='1', conns={'PLUS': 'itestp', 'MINUS': 'itestm'})]
+                dut_conns = dict(bias='itestm', outp='itestm', inp='itestp', outn='itestm', inn='itestp')
+            elif case_idx == 1:
+                src_list = [dict(lib='analogLib', type='isin', value='1', conns={'PLUS': 'itestp', 'MINUS': 'VSS'})]
+                dut_conns = dict(bias='itestm', outp='itestm', inp='itestp', outn='itestm', inn='itestp')
+            elif case_idx == 2:
+                src_list = [dict(lib='analogLib', type='isin', value='1', conns={'PLUS': 'itestp', 'MINUS': 'itestm'})]
+                dut_conns = dict(bias='itestp', outp='itestm', inp='itestm', outn='itestm', inn='itestm')
+            elif case_idx == 3:
+                src_list = [dict(lib='analogLib', type='isin', value='1', conns={'PLUS': 'itestp', 'MINUS': 'VSS'})]
+                dut_conns = dict(bias='itestp', outp='itestm', inp='itestm', outn='itestm', inn='itestm')
+            else:
+                raise ValueError(f'Invalid case_idx={case_idx}')
 
         tbm_specs = dict(
             **self.specs['tbm_specs'],
