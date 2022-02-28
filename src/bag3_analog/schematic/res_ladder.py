@@ -74,8 +74,7 @@ class bag3_analog__res_ladder(Module):
         self.instances['XRES'].design(w=w, l=l, intent=res_type)
 
         # set up core and dummies
-        self.array_instance('XRES',
-                            inst_term_list=[(f'XRESC', []), (f'XRES_DUM', [])], dx=0, dy=-200)
+        self.array_instance('XRES', ['XRESC', 'XRES_DUM'], dx=0, dy=-200)
 
         # Array the core
         top_name = 'VDD' if top_vdd else 'top'

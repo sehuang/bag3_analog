@@ -29,7 +29,7 @@
 
 from typing import Any, Dict, Optional, Type, cast
 
-from pybag.enum import RoundMode
+from pybag.enum import RoundMode, MinLenMode
 
 from bag.util.immutable import Param
 from bag.design.module import Module
@@ -86,7 +86,7 @@ class Termination(ResArrayBase):
         self.connect_dummies(warrs, bulk_warrs)
 
         # Supply connections on xm_layer
-        self.connect_bulk_xm(bulk_warrs)
+        bot_xm, top_xm = self.connect_bulk_xm(bulk_warrs)
 
         nx_dum: int = self.params['nx_dum']
         ny_dum: int = self.params['ny_dum']
@@ -110,8 +110,14 @@ class Termination(ResArrayBase):
         w_xm_sig = self.tr_manager.get_width(xm_layer, 'sig')
         for pin_name, warr, _hide in pin_list:
             xm_idx = self.grid.coord_to_track(xm_layer, warr.middle, RoundMode.NEAREST)
+            if pin_name == 'PLUS':
+                avail_idx = self.tr_manager.get_next_track(xm_layer, top_xm.track_id.base_index, 'sup', 'sig', -1)
+                xm_idx = min(xm_idx, avail_idx)
+            elif pin_name == 'MINUS':
+                avail_idx = self.tr_manager.get_next_track(xm_layer, bot_xm.track_id.base_index, 'sup', 'sig', 1)
+                xm_idx = max(xm_idx, avail_idx)
             xm_tid = TrackID(xm_layer, xm_idx, w_xm_sig)
-            self.add_pin(pin_name, self.connect_to_tracks(warr, xm_tid), hide=_hide)
+            self.add_pin(pin_name, self.connect_to_tracks(warr, xm_tid, min_len_mode=MinLenMode.MIDDLE), hide=_hide)
 
         self.sch_params = dict(
             w=pinfo.w_res,

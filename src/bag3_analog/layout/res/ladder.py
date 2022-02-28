@@ -132,24 +132,38 @@ class ResLadder(ResArrayBase):
         w_sig_vm = tr_manager.get_width(vm_layer, 'sig')
 
         # Draw unit cell conn_layer wires
-        # conn layer ~ Fit tracks for 1 sup, 3 sig
-        # Define lower half
-        lower = self.grid.coord_to_track(hm_layer, 0)
-        pport = cast(BBox, self.get_device_port(0, 0, 'MINUS'))
-        upper = self.grid.coord_to_track(hm_layer, pport.ym, RoundMode.LESS_EQ)
-        lower_locs = tr_manager.spread_wires(hm_layer, ['sup', 'sig', 'sig', 'sig'],
-                                             lower, upper, sp_type=('sup', 'sig'), alignment=1)
-        upper = self.grid.coord_to_track(hm_layer, self.place_info.height)
-        pport = cast(BBox, self.get_device_port(0, 0, 'PLUS'))
-        lower = self.grid.coord_to_track(hm_layer, pport.ym, RoundMode.GREATER_EQ)
-        upper_locs = tr_manager.spread_wires(hm_layer, ['sig', 'sig', 'sig', 'sup'],
-                                             lower, upper, sp_type=('sup', 'sig'), alignment=-1)
-        hm_locs = lower_locs + upper_locs
+        # conn layer: Require tracks for 1 sup, 3 sig on top and bottom, with spacing for 1 sig in between
+        bot_lower = self.grid.coord_to_track(hm_layer, 0)
+        bot_pport = cast(BBox, self.get_device_port(0, 0, 'MINUS'))
+        bot_upper = self.grid.coord_to_track(hm_layer, bot_pport.ym, RoundMode.LESS_EQ)
+        avail_upper = tr_manager.get_next_track(hm_layer, bot_lower, 'sup', 'sig', 3)
+        bot_upper = max(bot_upper, avail_upper)
+        bot_locs = tr_manager.spread_wires(hm_layer, ['sup', 'sig', 'sig', 'sig'],
+                                           bot_lower, bot_upper, sp_type=('sup', 'sig'), alignment=1)
+
+        top_upper = self.grid.coord_to_track(hm_layer, self.place_info.height)
+        top_pport = cast(BBox, self.get_device_port(0, 0, 'PLUS'))
+        top_lower = self.grid.coord_to_track(hm_layer, top_pport.ym, RoundMode.GREATER_EQ)
+        avail_lower = tr_manager.get_next_track(hm_layer, top_upper, 'sup', 'sig', -3)
+        top_lower = min(top_lower, avail_lower)
+        top_locs = tr_manager.spread_wires(hm_layer, ['sig', 'sig', 'sig', 'sup'],
+                                           top_lower, top_upper, sp_type=('sup', 'sig'), alignment=-1)
+
+        # there should be at least one track separation between bot_upper and top_lower for vm_layer line end spacing
+        avail_idx = tr_manager.get_next_track(hm_layer, bot_upper, 'sig', 'sig', 2)
+        if top_lower < avail_idx:
+            raise ValueError(f'Not possible to fit necessary routing tracks on hm_layer={hm_layer}. '
+                             f'Increase unit cell length')
+        hm_locs = bot_locs + top_locs
 
         lower = self.grid.coord_to_track(vm_layer, 0)
         upper = self.grid.coord_to_track(vm_layer, self.place_info.width)
-        vm_locs = tr_manager.spread_wires(vm_layer, ['sup', 'sig', 'sig', 'sig', 'sup'],
-                                          lower, upper, sp_type=('sup', 'sig'), alignment=0)
+        try:
+            vm_locs = tr_manager.spread_wires(vm_layer, ['sup', 'sig', 'sig', 'sig', 'sup'],
+                                              lower, upper, sp_type=('sup', 'sig'), alignment=0)
+        except ValueError:
+            raise ValueError(f'Not possible to fit necessary routing tracks on vm_layer={vm_layer}. '
+                             f'Increase unit cell width')
 
         # Determine x-dimensions for hm_layer
         ext_x, ext_y = self.grid.get_via_extensions(Direction.LOWER, hm_layer, w_sig_hm, w_sig_vm)
@@ -468,6 +482,8 @@ class ResLadder(ResArrayBase):
         bot_unit_info = full_metal_dict[(nx_dum, ny_dum)]
         bot_tidx = translate_layers(self.grid, hm_layer,
                                     bot_unit_info[hm_layer][0].track_id.base_index, xm_layer)
+        avail_bot_tidx = tr_manager.get_next_track(xm_layer, xm_warr_list[0].track_id.base_index, 'sig', 'sup', -1)
+        bot_tidx = min(bot_tidx, avail_bot_tidx)
         bot_warr = self.connect_to_tracks(
             bot_unit_info[vm_layer][2][0], TrackID(xm_layer, bot_tidx, w_sup_xm), track_lower=lower, track_upper=upper)
         self.add_pin('VSS' if self.params['bot_vss'] else 'bottom', bot_warr)
@@ -475,6 +491,8 @@ class ResLadder(ResArrayBase):
         top_unit_info = full_metal_dict[(nx - nx_dum - 1 if ny_core % 2 else nx_dum, ny - ny_dum - 1)]
         top_tidx = translate_layers(self.grid, hm_layer,
                                     top_unit_info[hm_layer][-1].track_id.base_index, xm_layer)
+        avail_top_tidx = tr_manager.get_next_track(xm_layer, xm_warr_list[-1].track_id.base_index, 'sig', 'sup', 1)
+        top_tidx = max(top_tidx, avail_top_tidx)
         top_warr = self.connect_to_tracks(
             top_unit_info[vm_layer][2][-1], TrackID(xm_layer, top_tidx, w_sup_xm), track_lower=lower, track_upper=upper)
         self.add_pin('VDD' if self.params['top_vdd'] else 'top', top_warr)

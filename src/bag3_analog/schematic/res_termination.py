@@ -62,37 +62,38 @@ class bag3_analog__res_termination(Module):
             sup_name="Supply name to connect to bulk or float"
         )
 
-    def design(self, w: int, l: int, res_type: str, nx: int, ny, nx_dum: int, ny_dum: int,
-               export_mid: bool, sup_name: str) -> None:
-        # Design unit cell
-        self.instances['XRES'].design(w=w, l=l, intent=res_type)
+    def design(self, w: int, l: int, res_type: str, nx: int, ny, nx_dum: int, ny_dum: int, export_mid: bool,
+               sup_name: str) -> None:
+        unit_params = dict(w=w, l=l, intent=res_type)
+        npar = nx - 2 * nx_dum
+        nser = ny - 2 * ny_dum
+        ndum = nx * ny - npar * nser
 
-        # Array in the y direction
-        self.array_instance('XRES', inst_term_list=[(f'XRES{y}', []) for y in range(ny)], dx=0, dy=-200)
+        rp_name = 'XRES_P'
+        inst_name_list = [rp_name]
 
-        # Set appropriate connection in the x direction
-        for yidx in range(ny):
-            inst_term_list = []
-            term = f'XRES{yidx}'
-            for xidx in range(nx):
-                if yidx < ny_dum or yidx > ny - ny_dum - 1 or xidx < nx_dum or xidx > nx - nx_dum - 1:
-                    plus = sup_name
-                    minus = sup_name
-                elif yidx == ny_dum + (ny - 2 * ny_dum) // 2 - 1 and export_mid:
-                    # TODO: there must be a better way to describe this
-                    plus = 'PLUS' if yidx == ny_dum else f'm{yidx - 1}'
-                    minus = 'MID'
-                elif yidx == ny_dum + (ny - 2 * ny_dum) // 2 and export_mid:
-                    plus = 'MID'
-                    minus = 'MINUS' if yidx == ny - ny_dum - 1 else f'm{yidx}'
-                else:
-                    plus = 'PLUS' if yidx == ny_dum else f'm{yidx - 1}'
-                    minus = 'MINUS' if yidx == ny - ny_dum - 1 else f'm{yidx}'
-                inst_term_list.append((f'{term}_{xidx}', [('PLUS', plus), ('MINUS', minus), ('BULK', sup_name)]))
-            self.array_instance(term, inst_term_list=inst_term_list, dx=200)
+        rm_name = 'XRES_M'
+        if export_mid:
+            inst_name_list.append(rm_name)
+            nser = nser // 2
+
+        dum_name = 'XRES_DUM'
+        if ndum > 0:
+            inst_name_list.append(dum_name)
+
+        self.array_instance('XRES', inst_name_list, dy=-200)
+
+        # design dummies
+        if ndum > 0:
+            self.design_resistor(dum_name, unit_params, npar=ndum, plus=sup_name, minus=sup_name, bulk=sup_name)
+
+        # design resistors
+        if export_mid:
+            self.design_resistor(rp_name, unit_params, nser, npar, 'PLUS', 'MID', 'p', sup_name, True)
+            self.design_resistor(rm_name, unit_params, nser, npar, 'MID', 'MINUS', 'm', sup_name, True)
+            self.add_pin('MID', TermType.inout)
+        else:
+            self.design_resistor(rp_name, unit_params, nser, npar, 'PLUS', 'MINUS', 'p', sup_name, True)
 
         # Change bulk pin name
         self.rename_pin('BULK', sup_name)
-
-        if export_mid:
-            self.add_pin('MID', TermType.inout)
