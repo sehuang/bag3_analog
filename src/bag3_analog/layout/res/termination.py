@@ -95,20 +95,21 @@ class Termination(ResArrayBase):
         # --- Routing of unit resistors --- #
         lower_bot, lower_top = self.connect_units(warrs, nx_dum, pinfo.nx - nx_dum, ny_dum, pinfo.ny // 2)
         upper_bot, upper_top = self.connect_units(warrs, nx_dum, pinfo.nx - nx_dum, pinfo.ny // 2, pinfo.ny - ny_dum)
-        pin_list = [('PLUS', upper_top, False)]
+        pin_list = [('PLUS', upper_top)]
         if pinfo.ny == 1:
-            pin_list.append(('MINUS', upper_bot, False))
+            pin_list.append(('MINUS', upper_bot))
         else:
-            pin_list.append(('MINUS', lower_bot, False))
+            pin_list.append(('MINUS', lower_bot))
             mid = self.connect_wires([lower_top, upper_bot])[0]
-            pin_list.append(('MID', mid, not export_mid))
+            if export_mid:
+                pin_list.append(('MID', mid))
 
         # connect to xm_layer
         hm_layer = self.conn_layer + 1
         vm_layer = hm_layer + 1
         xm_layer = vm_layer + 1
         w_xm_sig = self.tr_manager.get_width(xm_layer, 'sig')
-        for pin_name, warr, _hide in pin_list:
+        for pin_name, warr in pin_list:
             xm_idx = self.grid.coord_to_track(xm_layer, warr.middle, RoundMode.NEAREST)
             if pin_name == 'PLUS':
                 avail_idx = self.tr_manager.get_next_track(xm_layer, top_xm.track_id.base_index, 'sup', 'sig', -1)
@@ -117,7 +118,7 @@ class Termination(ResArrayBase):
                 avail_idx = self.tr_manager.get_next_track(xm_layer, bot_xm.track_id.base_index, 'sup', 'sig', 1)
                 xm_idx = max(xm_idx, avail_idx)
             xm_tid = TrackID(xm_layer, xm_idx, w_xm_sig)
-            self.add_pin(pin_name, self.connect_to_tracks(warr, xm_tid, min_len_mode=MinLenMode.MIDDLE), hide=_hide)
+            self.add_pin(pin_name, self.connect_to_tracks(warr, xm_tid, min_len_mode=MinLenMode.MIDDLE))
 
         self.sch_params = dict(
             w=pinfo.w_res,
