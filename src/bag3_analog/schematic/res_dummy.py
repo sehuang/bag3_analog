@@ -78,7 +78,7 @@ class bag3_analog__res_dummy(Module):
 
         # design dummy
         if ndum == 0:
-            self.delete_instance('RDUM')
+            self.delete_instance('XDUM')
         else:
             unit_params = dict(w=w, l=l, intent=intent)
-            self.design_resistor('RDUM', unit_params, 1, ndum, sub_name, sub_name, bulk=sub_name)
+            self.design_resistor('XDUM', unit_params, 1, ndum, sub_name, sub_name, bulk=sub_name)

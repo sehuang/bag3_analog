@@ -4,8 +4,8 @@ view_name: symbol
 bbox:
   - -4
   - -4
-  - 144
-  - 224
+  - 258
+  - 236
 terminals:
   BULK:
     obj:
@@ -406,6 +406,33 @@ shapes:
       visible: true
       drafting: true
       text: BULK
+  -
+    - 8
+    - layer: 236
+      purpose: 237
+      net: ""
+      origin:
+        - 130
+        - 230
+      alignment: 1
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: "[@instanceName]"
+      evaluator: cdsNLPEvalText
+  -
+    - 0
+    - layer: 236
+      purpose: 4294967295
+      net: ""
+      bbox:
+        - 0
+        - 0
+        - 140
+        - 220
 instances:
   {}
 props:
@@ -415,10 +442,10 @@ props:
 app_defs:
   _dbLastSavedCounter:
     - 0
-    - 149
+    - 157
   _dbvCvTimeStamp:
     - 0
-    - 149
+    - 157
   cdbRevision:
     - 0
     - 227612
