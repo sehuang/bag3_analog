@@ -132,7 +132,7 @@ shapes:
       drafting: true
       text: BULK
 instances:
-  RDUM:
+  XDUM:
     lib_name: BAG_prim
     cell_name: res_standard
     view_name: symbol
@@ -155,10 +155,10 @@ instances:
 props:
   connectivityLastUpdated:
     - 0
-    - 1097
+    - 1149
   lastSchematicExtraction:
     - 4
-    - time_val: 1623633685
+    - time_val: 1653362048
   net#:
     - 0
     - 0
@@ -167,7 +167,7 @@ props:
     - 4
   schGeometryLastUpdated:
     - 0
-    - 1097
+    - 1149
   schGeometryVersion:
     - 3
     - sch.ds.gm.1.4
@@ -177,10 +177,10 @@ props:
 app_defs:
   _dbLastSavedCounter:
     - 0
-    - 1097
+    - 1149
   _dbvCvTimeStamp:
     - 0
-    - 1097
+    - 1149
   cdbRevision:
     - 0
     - 227612

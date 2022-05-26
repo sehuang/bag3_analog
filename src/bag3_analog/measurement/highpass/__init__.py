@@ -33,6 +33,7 @@ from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 
+from scipy.interpolate import InterpolatedUnivariateSpline
 import scipy.signal as signal
 
 from bag.simulation.measure import MeasurementManager, MeasInfo
@@ -51,6 +52,10 @@ class HighpassACMeas(MeasurementManager):
     def bias_diff(self):
         return self.specs.get('bias_diff', True)
 
+    @property
+    def plot(self):
+        return self.specs.get('plot', False)
+
     def get_sim_info(self, sim_db: SimulationDB, dut: DesignInstance, cur_info: MeasInfo):
         raise NotImplementedError
 
@@ -68,34 +73,35 @@ class HighpassACMeas(MeasurementManager):
             helper.append(self.async_meas_case(name, sim_dir, sim_db, dut, idx))
 
         meas_results = await helper.gather_err()
-        ans = self.compute_passives(meas_results, self.bias_diff)
+        ans = self.compute_passives(meas_results, self.bias_diff, self.plot)
 
         tf_results = await self.async_meas_tf(name, sim_dir, sim_db, dut)
-        plt.semilogx(tf_results['freq'], 20*np.log10(tf_results['tf']), label="Measured")
+        if self.plot:
+            plt.semilogx(tf_results['freq'], 20*np.log10(tf_results['tf']), label="Measured")
 
-        def get_3db(freq, tf):
-            tmp = np.argwhere(tf > -3)
-            return freq[tmp[0]]
-        measured_3db = get_3db(tf_results['freq'], 20*np.log10(tf_results['tf']))
-        plt.vlines(measured_3db, -200, 5, linestyle="dashed",
-                   label="Measured 3dB corner: {:.2f}GHz".format(measured_3db[0]/1e9))
+            def get_3db(freq, tf):
+                tmp = np.argwhere(tf > -3)
+                return freq[tmp[0]]
+            measured_3db = get_3db(tf_results['freq'], 20*np.log10(tf_results['tf']))
+            plt.vlines(measured_3db, -200, 5, linestyle="dashed",
+                       label="Measured 3dB corner: {:.2f}GHz".format(measured_3db[0]/1e9))
 
-        r = ans['r']
-        cc = ans['cc']
-        tf_calc = signal.TransferFunction([r*cc, 0], [r*cc, 1])
-        w, mag, _ = signal.bode(tf_calc, 2 * np.pi * tf_results['freq'])
-        plt.semilogx(w / (2 * np.pi), mag, label="Modeled")
-        plt.grid()
-        plt.legend()
-        plt.ylabel("outp / inp [dB]")
-        plt.xlabel("Frequency")
-        plt.title("Transfer function measurement, outp / inp")
-        plt.show()
+            r = ans['r']
+            cc = ans['cc']
+            tf_calc = signal.TransferFunction([r*cc, 0], [r*cc, 1])
+            w, mag, _ = signal.bode(tf_calc, 2 * np.pi * tf_results['freq'])
+            plt.semilogx(w / (2 * np.pi), mag, label="Modeled")
+            plt.grid()
+            plt.legend()
+            plt.ylabel("outp / inp [dB]")
+            plt.xlabel("Frequency")
+            plt.title("Transfer function measurement, outp / inp")
+            plt.show()
 
         return ans
 
     @staticmethod
-    def compute_passives(meas_results: Sequence[Mapping[str, Any]], bias_diff: bool) -> Mapping[str, Any]:
+    def compute_passives(meas_results: Sequence[Mapping[str, Any]], bias_diff: bool, plot: bool) -> Mapping[str, Any]:
         freq0 = meas_results[0]['freq']
         freq1 = meas_results[1]['freq']
         freq2 = meas_results[2]['freq']
@@ -125,11 +131,12 @@ class HighpassACMeas(MeasurementManager):
         zpp = const_a * zpm
         zc = const_b * zpm
 
-        plt.loglog(freq0, np.abs(zpm))
-        plt.loglog(freq0, np.abs(zpp))
-        plt.loglog(freq0, np.abs(zc))
-        plt.grid()
-        plt.show()
+        if plot:
+            plt.loglog(freq0, np.abs(zpm))
+            plt.loglog(freq0, np.abs(zpp))
+            plt.loglog(freq0, np.abs(zc))
+            plt.grid()
+            plt.show()
 
         cc = estimate_cap(freq0, zc)
         cpi = estimate_cap(freq0, zpp)
@@ -138,8 +145,7 @@ class HighpassACMeas(MeasurementManager):
         #
         # # --- Verify vp1 is consistent --- #
         vp1_calc = - ((zc + zpm) * zpp) / (zc + zpp + zpm)
-        if not np.isclose(vp1, vp1_calc, rtol=1e-3).all():
-        # if True:
+        if plot and not np.isclose(vp1, vp1_calc, rtol=1e-3).all():
             plt.loglog(freq0, np.abs(vp1), label='measured')
             plt.loglog(freq0, np.abs(vp1_calc), 'g--', label='calculated')
             plt.xlabel('Frequency (in Hz)')
@@ -168,13 +174,14 @@ class HighpassACMeas(MeasurementManager):
         zpp = const_a * zpm
         zc = const_b * zpm
 
-        plt.loglog(freq0, np.abs(zpm))
-        plt.loglog(freq0, np.abs(zpp))
-        plt.loglog(freq0, np.abs(zc))
-        plt.grid()
-        plt.show()
+        if plot:
+            plt.loglog(freq0, np.abs(zpm))
+            plt.loglog(freq0, np.abs(zpp))
+            plt.loglog(freq0, np.abs(zc))
+            plt.grid()
+            plt.show()
 
-        r = np.mean(zc)
+        r = InterpolatedUnivariateSpline(freq0, np.real(zc))(0)
         cpb = estimate_cap(freq0, zpp)
         cpi_cpo = estimate_cap(freq0, zpm)
         cpo = cpo_cpb - cpb
@@ -182,8 +189,7 @@ class HighpassACMeas(MeasurementManager):
 
         # # --- Verify vp1 is consistent --- #
         vp1_calc = - ((zc + zpm) * zpp) / (zc + zpp + zpm)
-        if not np.isclose(vp1, vp1_calc, rtol=1e-3).all():
-        # if True:
+        if plot and not np.isclose(vp1, vp1_calc, rtol=1e-3).all():
             plt.loglog(freq0, np.abs(vp1), label='measured')
             plt.loglog(freq0, np.abs(vp1_calc), 'g--', label='calculated')
             plt.xlabel('Frequency (in Hz)')

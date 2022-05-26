@@ -132,7 +132,7 @@ class bag3_analog__high_pass_diff(Module):
             ndum = (*ndum, True)
         ndum_par, ndum_ser, dum_connect_mid = ndum
         for name, conn, mid_pfx in zip(dum_names, dum_conns, dum_mid_conns_pfx):
-            if not ndum:
+            if ndum_ser * ndum_par == 0:
                 self.remove_instance(name)
             else:
                 self.design_resistor(name, unit_params, ndum_ser, ndum_par, conn, conn, f'{mid_pfx}_dum_x',
