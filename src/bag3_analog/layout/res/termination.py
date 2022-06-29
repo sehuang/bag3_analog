@@ -27,16 +27,18 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from typing import Any, Dict, Optional, Type, cast
+from typing import Any, Mapping, Optional, Type, cast
 
-from pybag.enum import RoundMode, MinLenMode
+from pybag.enum import RoundMode, MinLenMode, Orient2D
+from pybag.core import Transform, BBox
 
 from bag.util.immutable import Param
 from bag.design.module import Module
-from bag.layout.routing.base import TrackID
-from bag.layout.template import TemplateDB
+from bag.layout.routing.base import TrackID, TrackManager, WDictType, SpDictType, WireArray
+from bag.layout.template import TemplateDB, TemplateBase
 
 from xbase.layout.res.base import ResBasePlaceInfo, ResArrayBase
+from xbase.layout.array.top import ArrayBaseWrapper
 
 from ...schematic.res_termination import bag3_analog__res_termination
 
@@ -49,7 +51,7 @@ class Termination(ResArrayBase):
     Use export_mid to use as a differential termination
 
     Assumption
-    - Top layer is an even layer
+    - Top layer is a horizontal layer
 
     TODO: make the series / parallel direction a parameter.
     """
@@ -61,16 +63,17 @@ class Termination(ResArrayBase):
         return bag3_analog__res_termination
 
     @classmethod
-    def get_params_info(cls) -> Dict[str, str]:
+    def get_params_info(cls) -> Mapping[str, str]:
         return dict(
             pinfo='The ResBasePlaceInfo object.',
             nx_dum='Number of dummies on each side, X direction',
             ny_dum='Number of dummies on each side, Y direction',
-            export_mid="True to export mid, so this can be used differentially",
+            export_mid='True to export mid for differential termination; False for single ended termination; '
+                       'True by default',
         )
 
     @classmethod
-    def get_default_param_values(cls) -> Dict[str, Any]:
+    def get_default_param_values(cls) -> Mapping[str, Any]:
         return dict(nx_dum=0, ny_dum=0, export_mid=True)
 
     def draw_layout(self) -> None:
@@ -96,7 +99,7 @@ class Termination(ResArrayBase):
         lower_bot, lower_top = self.connect_units(warrs, nx_dum, pinfo.nx - nx_dum, ny_dum, pinfo.ny // 2)
         upper_bot, upper_top = self.connect_units(warrs, nx_dum, pinfo.nx - nx_dum, pinfo.ny // 2, pinfo.ny - ny_dum)
         pin_list = [('PLUS', upper_top)]
-        if pinfo.ny == 1:
+        if pinfo.ny - 2 * ny_dum == 1:
             pin_list.append(('MINUS', upper_bot))
         else:
             pin_list.append(('MINUS', lower_bot))
@@ -131,3 +134,90 @@ class Termination(ResArrayBase):
             export_mid=export_mid,
             sup_name='VDD' if pinfo.res_config['sub_type_default'] == 'ntap' else 'VSS'
         )
+
+
+class TerminationTop(TemplateBase):
+    def __init__(self, temp_db: TemplateDB, params: Param, **kwargs: Any) -> None:
+        TemplateBase.__init__(self, temp_db, params, **kwargs)
+        tr_widths: WDictType = self.params['tr_widths']
+        tr_spaces: SpDictType = self.params['tr_spaces']
+        self._tr_manager = TrackManager(self.grid, tr_widths, tr_spaces)
+
+    @classmethod
+    def get_schematic_class(cls) -> Optional[Type[Module]]:
+        return bag3_analog__res_termination
+
+    @classmethod
+    def get_params_info(cls) -> Mapping[str, str]:
+        return dict(
+            tr_widths='Track width dictionary for TrackManager',
+            tr_spaces='Track spaces dictionary for TrackManager',
+            term_params='Parameters for Termination',
+            port_layer='Top layer for ports',
+        )
+
+    def draw_layout(self) -> None:
+        term_params: Mapping[str, Any] = self.params['term_params']
+        term_master = self.new_template(ArrayBaseWrapper, params=dict(cls_name=Termination.get_qualified_name(),
+                                                                      params=term_params))
+
+        port_layer: int = self.params['port_layer']
+        pinfo_top_layer = term_master.top_layer
+        if port_layer <= pinfo_top_layer:
+            raise ValueError(f'Since port_layer={port_layer} is <= pinfo.top_layer={pinfo_top_layer}, use '
+                             f'Termination directly instead of TerminationTop.')
+        if self.grid.get_direction(port_layer) is Orient2D.y:
+            raise ValueError(f'This generator expects port_layer={port_layer} to be horizontal.')
+
+        w_pitch, h_pitch = self.grid.get_size_pitch(port_layer)
+        w_term, h_term = self.grid.get_size_pitch(pinfo_top_layer)
+
+        w_blk = -(- term_master.bound_box.w // w_pitch) * w_pitch
+        x_term = (w_blk - term_master.bound_box.w) // 2
+        h_blk = -(- term_master.bound_box.h // h_pitch) * h_pitch
+        y_term = (h_blk - term_master.bound_box.h) // 2
+        y_term = -(- y_term // h_term) * h_term
+        term_inst = self.add_instance(term_master, xform=Transform(dx=x_term, dy=y_term))
+
+        # get tracks on port layer
+        bot_tidx = self.grid.coord_to_track(port_layer, 0, RoundMode.NEAREST)
+        top_tidx = self.grid.coord_to_track(port_layer, h_blk, RoundMode.NEAREST)
+
+        export_mid = term_inst.has_port('MID')
+        if export_mid:
+            _list = ['sup', 'sig', 'sig', 'sig', 'sup']
+        else:
+            _list = ['sup', 'sig', 'sig', 'sup']
+        tidx_list = self._tr_manager.spread_wires(port_layer, _list, bot_tidx, top_tidx, ('sig', 'sig'))
+        port_coords = [self.grid.track_to_coord(port_layer, _tidx) for _tidx in tidx_list]
+
+        # export supply
+        sup_name = term_master.sch_params['sup_name']
+        sup_xm = term_inst.get_all_port_pins(sup_name)
+        sup_bot = self.connect_via_stack(self._tr_manager, sup_xm[0], port_layer, 'sup',
+                                         coord_list_p_override=[port_coords[0]])
+        sup_top = self.connect_via_stack(self._tr_manager, sup_xm[-1], port_layer, 'sup',
+                                         coord_list_p_override=[port_coords[-1]])
+        self.add_pin(sup_name, [sup_bot, sup_top])
+
+        # export PLUS
+        plus_port = self.connect_via_stack(self._tr_manager, term_inst.get_pin('PLUS'), port_layer, 'sig',
+                                           coord_list_p_override=[port_coords[-2]],
+                                           mlm_dict={port_layer-1: MinLenMode.UPPER})
+        self.add_pin('PLUS', plus_port)
+        # export MINUS
+        minus_port = self.connect_via_stack(self._tr_manager, term_inst.get_pin('MINUS'), port_layer, 'sig',
+                                            coord_list_p_override=[port_coords[1]],
+                                            mlm_dict={port_layer-1: MinLenMode.LOWER})
+        self.add_pin('MINUS', minus_port)
+        # export MID
+        if export_mid:
+            mid_port = self.connect_via_stack(self._tr_manager, term_inst.get_pin('MID'), port_layer, 'sig',
+                                              coord_list_p_override=[port_coords[2]])
+            self.add_pin('MID', mid_port)
+
+        # set size
+        self.set_size_from_bound_box(port_layer, BBox(0, 0, w_blk, h_blk))
+
+        # get schematic parameters
+        self.sch_params = term_master.sch_params
