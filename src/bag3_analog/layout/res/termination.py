@@ -154,12 +154,7 @@ class TerminationTop(TemplateBase):
             tr_spaces='Track spaces dictionary for TrackManager',
             term_params='Parameters for Termination',
             port_layer='Top layer for ports',
-            port_tr_sep='Separate out port_layer tracks by this amount; 0 by default'
         )
-
-    @classmethod
-    def get_default_param_values(cls) -> Mapping[str, Any]:
-        return dict(port_tr_sep=0)
 
     def draw_layout(self) -> None:
         term_params: Mapping[str, Any] = self.params['term_params']
@@ -184,40 +179,54 @@ class TerminationTop(TemplateBase):
         y_term = -(- y_term // h_term) * h_term
         term_inst = self.add_instance(term_master, xform=Transform(dx=x_term, dy=y_term))
 
-        # get tracks on port layer
-        port_tr_sep: int = self.params['port_tr_sep']
-        bot_tidx = self.grid.coord_to_track(port_layer, 0, RoundMode.LESS)
-        top_tidx = self.grid.coord_to_track(port_layer, h_blk, RoundMode.GREATER)
-        if port_tr_sep > 0:
-            bot_tidx = self._tr_manager.get_next_track(port_layer, bot_tidx, 'sup', 'sup', up=-port_tr_sep)
-            top_tidx = self._tr_manager.get_next_track(port_layer, top_tidx, 'sup', 'sup', up=port_tr_sep)
+        # get tracks on min(port_layer, pinfo.top_layer + 4)
+        tr_layer = min(port_layer, pinfo_top_layer + 4)
+        bot_tidx = self.grid.coord_to_track(tr_layer, 0, RoundMode.NEAREST)
+        top_tidx = self.grid.coord_to_track(tr_layer, h_blk, RoundMode.NEAREST)
 
         export_mid = term_inst.has_port('MID')
         if export_mid:
             _list = ['sig', 'sig', 'sig', 'sig', 'sig']
         else:
             _list = ['sig', 'sig', 'sig', 'sig']
-        tidx_list = self._tr_manager.spread_wires(port_layer, _list, bot_tidx, top_tidx, ('sig', 'sig'))
-        port_coords = [self.grid.track_to_coord(port_layer, _tidx) for _tidx in tidx_list]
+        tidx_list = self._tr_manager.spread_wires(tr_layer, _list, bot_tidx, top_tidx, ('sig', 'sig'))
+        tr_coords = [self.grid.track_to_coord(tr_layer, _tidx) for _tidx in tidx_list]
 
-        # export supply
+        # get supply on tr_layer
         sup_name = term_master.sch_params['sup_name']
         sup_xm = term_inst.get_all_port_pins(sup_name)
-        sup_bot = self.connect_via_steps(sup_xm[0], port_layer, 'sup', [port_coords[0]])
-        sup_top = self.connect_via_steps(sup_xm[-1], port_layer, 'sup', [port_coords[-1]])
-        self.add_pin(sup_name, [sup_bot, sup_top])
+        sup_yl = self.connect_via_steps(sup_xm[0], tr_layer, 'sup', [tr_coords[0]])
+        sup_yh = self.connect_via_steps(sup_xm[-1], tr_layer, 'sup', [tr_coords[-1]])
+        sup_port = self.connect_wires([sup_yl, sup_yh])[0]
 
         # export PLUS
-        plus_port = self.connect_via_steps(term_inst.get_pin('PLUS'), port_layer, 'sig', [port_coords[-2]],
-                                           mlm_dict={port_layer-1: MinLenMode.UPPER})
-        self.add_pin('PLUS', plus_port)
+        plus_port = self.connect_via_steps(term_inst.get_pin('PLUS'), tr_layer, 'sig', [tr_coords[-2]],
+                                           mlm_dict={tr_layer-1: MinLenMode.UPPER})
         # export MINUS
-        minus_port = self.connect_via_steps(term_inst.get_pin('MINUS'), port_layer, 'sig', [port_coords[1]],
-                                            mlm_dict={port_layer-1: MinLenMode.LOWER})
-        self.add_pin('MINUS', minus_port)
+        minus_port = self.connect_via_steps(term_inst.get_pin('MINUS'), tr_layer, 'sig', [tr_coords[1]],
+                                            mlm_dict={tr_layer-1: MinLenMode.LOWER})
         # export MID
         if export_mid:
-            mid_port = self.connect_via_steps(term_inst.get_pin('MID'), port_layer, 'sig', [port_coords[2]])
+            mid_port = self.connect_via_steps(term_inst.get_pin('MID'), tr_layer, 'sig', [tr_coords[2]])
+        else:
+            mid_port = None
+
+        if port_layer > tr_layer:
+            sup_port = self.connect_via_stack(self._tr_manager, sup_port, port_layer - 1, 'sup',
+                                              coord_list_o_override=[x_term])
+            plus_port = self.connect_via_stack(self._tr_manager, plus_port, port_layer, 'sig',
+                                               coord_list_p_override=[h_blk], mlm_dict={port_layer-1: MinLenMode.UPPER})
+            minus_port = self.connect_via_stack(self._tr_manager, minus_port, port_layer, 'sig',
+                                                coord_list_p_override=[0], mlm_dict={port_layer-1: MinLenMode.LOWER})
+            if export_mid:
+                mid_port = self.connect_via_stack(self._tr_manager, mid_port, port_layer, 'sig',
+                                                  coord_list_p_override=[h_blk // 2])
+
+        # add pins
+        self.add_pin(sup_name, sup_port)
+        self.add_pin('PLUS', plus_port)
+        self.add_pin('MINUS', minus_port)
+        if export_mid:
             self.add_pin('MID', mid_port)
 
         # set size
