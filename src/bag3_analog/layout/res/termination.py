@@ -220,7 +220,7 @@ class TerminationTop(TemplateBase):
                                                 coord_list_p_override=[0], mlm_dict={port_layer-1: MinLenMode.LOWER})
             if export_mid:
                 mid_port = self.connect_via_stack(self._tr_manager, mid_port, port_layer, 'sig',
-                                                  coord_list_p_override=[h_blk // 2])
+                                                  coord_list_p_override=[h_blk // 2], alternate_o=True)
 
         # add pins
         self.add_pin(sup_name, sup_port)
