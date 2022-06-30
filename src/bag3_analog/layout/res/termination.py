@@ -154,7 +154,12 @@ class TerminationTop(TemplateBase):
             tr_spaces='Track spaces dictionary for TrackManager',
             term_params='Parameters for Termination',
             port_layer='Top layer for ports',
+            port_tr_sep='Separate out port_layer tracks by this amount; 0 by default'
         )
+
+    @classmethod
+    def get_default_param_values(cls) -> Mapping[str, Any]:
+        return dict(port_tr_sep=0)
 
     def draw_layout(self) -> None:
         term_params: Mapping[str, Any] = self.params['term_params']
@@ -180,8 +185,12 @@ class TerminationTop(TemplateBase):
         term_inst = self.add_instance(term_master, xform=Transform(dx=x_term, dy=y_term))
 
         # get tracks on port layer
+        port_tr_sep: int = self.params['port_tr_sep']
         bot_tidx = self.grid.coord_to_track(port_layer, 0, RoundMode.LESS)
         top_tidx = self.grid.coord_to_track(port_layer, h_blk, RoundMode.GREATER)
+        if port_tr_sep > 0:
+            bot_tidx = self._tr_manager.get_next_track(port_layer, bot_tidx, 'sup', 'sup', up=-port_tr_sep)
+            top_tidx = self._tr_manager.get_next_track(port_layer, top_tidx, 'sup', 'sup', up=port_tr_sep)
 
         export_mid = term_inst.has_port('MID')
         if export_mid:
