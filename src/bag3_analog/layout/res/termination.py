@@ -27,7 +27,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from typing import Any, Mapping, Optional, Type, cast
+from typing import Any, Mapping, Optional, Type, cast, Sequence
 
 from pybag.enum import RoundMode, MinLenMode, Orient2D
 from pybag.core import Transform, BBox
@@ -180,40 +180,35 @@ class TerminationTop(TemplateBase):
         term_inst = self.add_instance(term_master, xform=Transform(dx=x_term, dy=y_term))
 
         # get tracks on port layer
-        bot_tidx = self.grid.coord_to_track(port_layer, 0, RoundMode.NEAREST)
-        top_tidx = self.grid.coord_to_track(port_layer, h_blk, RoundMode.NEAREST)
+        bot_tidx = self.grid.coord_to_track(port_layer, 0, RoundMode.LESS)
+        top_tidx = self.grid.coord_to_track(port_layer, h_blk, RoundMode.GREATER)
 
         export_mid = term_inst.has_port('MID')
         if export_mid:
-            _list = ['sup', 'sig', 'sig', 'sig', 'sup']
+            _list = ['sig', 'sig', 'sig', 'sig', 'sig']
         else:
-            _list = ['sup', 'sig', 'sig', 'sup']
+            _list = ['sig', 'sig', 'sig', 'sig']
         tidx_list = self._tr_manager.spread_wires(port_layer, _list, bot_tidx, top_tidx, ('sig', 'sig'))
         port_coords = [self.grid.track_to_coord(port_layer, _tidx) for _tidx in tidx_list]
 
         # export supply
         sup_name = term_master.sch_params['sup_name']
         sup_xm = term_inst.get_all_port_pins(sup_name)
-        sup_bot = self.connect_via_stack(self._tr_manager, sup_xm[0], port_layer, 'sup',
-                                         coord_list_p_override=[port_coords[0]])
-        sup_top = self.connect_via_stack(self._tr_manager, sup_xm[-1], port_layer, 'sup',
-                                         coord_list_p_override=[port_coords[-1]])
+        sup_bot = self.connect_via_steps(sup_xm[0], port_layer, 'sup', [port_coords[0]])
+        sup_top = self.connect_via_steps(sup_xm[-1], port_layer, 'sup', [port_coords[-1]])
         self.add_pin(sup_name, [sup_bot, sup_top])
 
         # export PLUS
-        plus_port = self.connect_via_stack(self._tr_manager, term_inst.get_pin('PLUS'), port_layer, 'sig',
-                                           coord_list_p_override=[port_coords[-2]],
+        plus_port = self.connect_via_steps(term_inst.get_pin('PLUS'), port_layer, 'sig', [port_coords[-2]],
                                            mlm_dict={port_layer-1: MinLenMode.UPPER})
         self.add_pin('PLUS', plus_port)
         # export MINUS
-        minus_port = self.connect_via_stack(self._tr_manager, term_inst.get_pin('MINUS'), port_layer, 'sig',
-                                            coord_list_p_override=[port_coords[1]],
+        minus_port = self.connect_via_steps(term_inst.get_pin('MINUS'), port_layer, 'sig', [port_coords[1]],
                                             mlm_dict={port_layer-1: MinLenMode.LOWER})
         self.add_pin('MINUS', minus_port)
         # export MID
         if export_mid:
-            mid_port = self.connect_via_stack(self._tr_manager, term_inst.get_pin('MID'), port_layer, 'sig',
-                                              coord_list_p_override=[port_coords[2]])
+            mid_port = self.connect_via_steps(term_inst.get_pin('MID'), port_layer, 'sig', [port_coords[2]])
             self.add_pin('MID', mid_port)
 
         # set size
@@ -221,3 +216,12 @@ class TerminationTop(TemplateBase):
 
         # get schematic parameters
         self.sch_params = term_master.sch_params
+
+    def connect_via_steps(self, warr_xm: WireArray, top_layer: int, w_type: str, coords: Sequence[int],
+                          mlm_dict: Mapping[int, MinLenMode] = None) -> WireArray:
+        xm_layer = warr_xm.layer_id
+        cur_warr = warr_xm
+        for _layer in range(xm_layer + 2, top_layer + 1, 2):
+            cur_warr = self.connect_via_stack(self._tr_manager, cur_warr, _layer, w_type, coord_list_p_override=coords,
+                                              mlm_dict=mlm_dict)
+        return cur_warr
