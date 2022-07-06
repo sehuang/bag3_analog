@@ -8,7 +8,7 @@ from bag.layout.template import TemplateDB, TemplateBase
 from bag.layout.routing.base import TrackID, TrackManager, WDictType, SpDictType
 
 from pybag.core import Transform, BBox
-from pybag.enum import MinLenMode, RoundMode, Direction, Orientation, PinMode
+from pybag.enum import RoundMode, Direction, Orientation, PinMode, Orient2D
 
 from xbase.layout.mos.top import GenericWrapper
 from xbase.layout.array.top import ArrayBaseWrapper
@@ -37,6 +37,7 @@ class RDAC(TemplateBase):
             res_params='Parameters for res_ladder',
             dec_params='Parameters for rdac_decoder',
             num_dec='Number of decoders for one res_ladder',
+            top_layer='Top metal layer for the RDAC, should be >= 7',
         )
 
     @classmethod
@@ -67,6 +68,9 @@ class RDAC(TemplateBase):
         vm_layer = xm_layer - 1
         vm_lp = self.grid.tech_info.get_lay_purp_list(vm_layer)[0]
 
+        top_layer: int = self.params['top_layer']
+        assert top_layer >= yym_layer, f'This generator expects top_layer={top_layer} is >= {yym_layer}.'
+
         # --- Placement --- #
         res_w, res_h = res_master.bound_box.w, res_master.bound_box.h
         res_coord0 = res_core.core_coord0
@@ -90,11 +94,15 @@ class RDAC(TemplateBase):
 
         dec0_inst = self.add_instance(dec_master, xform=Transform(dx=start_x + res_w))
         dec_list.append(dec0_inst)
-        off_y = dec_coord0 - res_coord0 - h_pitch  # TODO: hack to make resistor array align with passgate array
-        res_inst = self.add_instance(res_master, xform=Transform(dx=start_x, dy=off_y))
+        _coord0 = min(dec0_inst.get_pin('VSS')[0].bound_box.ym, dec0_inst.get_pin('VDD')[0].bound_box.ym)
+        res_inst = self.add_instance(res_master, xform=Transform(dx=start_x), commit=False)
+        _coord1 = min(res_inst.get_pin('VSS')[0].bound_box.ym, res_inst.get_pin('VDD')[0].bound_box.ym)
+        off_y = dec_coord0 - res_coord0 + (_coord0 - _coord1)
+        res_inst.move_by(dy=off_y)
+        res_inst.commit()
         tot_h = max(dec_h, res_h + off_y)
 
-        self.set_size_from_bound_box(yym_layer, BBox(0, 0, tot_w, tot_h), round_up=True)
+        self.set_size_from_bound_box(top_layer, BBox(0, 0, tot_w, tot_h), round_up=True)
 
         # --- Routing --- #
         # export select signals as WireArrays
@@ -138,60 +146,82 @@ class RDAC(TemplateBase):
                                                  res_inst.get_pin(f'out<{idx}>'))
 
         # --- Supplies
-        # get res supplies on xxm_layer
+        # get res supplies on yym_layer
         res_vss_xm = res_inst.get_all_port_pins('VSS')
         res_vdd_xm = res_inst.get_all_port_pins('VDD')
-        vdd_ym_lidx = self.grid.coord_to_track(ym_layer, res_vdd_xm[0].lower, RoundMode.GREATER_EQ)
-        vss_ym_lidx = self._tr_manager.get_next_track(ym_layer, vdd_ym_lidx, 'sup', 'sup', up=1)
-        vdd_ym_ridx = self.grid.coord_to_track(ym_layer, res_vdd_xm[0].upper, RoundMode.LESS_EQ)
-        vss_ym_ridx = self._tr_manager.get_next_track(ym_layer, vdd_ym_ridx, 'sup', 'sup', up=-1)
-        w_sup_ym = self._tr_manager.get_width(ym_layer, 'sup')
-        w_sup_xxm = self._tr_manager.get_width(xxm_layer, 'sup')
-        vdd_ym_tid = TrackID(ym_layer, vdd_ym_lidx, w_sup_ym, 2, vdd_ym_ridx - vdd_ym_lidx)
-        vss_ym_tid = TrackID(ym_layer, vss_ym_lidx, w_sup_ym, 2, vss_ym_ridx - vss_ym_lidx)
-        res_vss_xxm, res_vdd_xxm = [], []
-        for sup_xm, sup_xxm, tid in [(res_vss_xm, res_vss_xxm, vss_ym_tid), (res_vdd_xm, res_vdd_xxm, vdd_ym_tid)]:
+        yym_lidx = self.grid.coord_to_track(yym_layer, res_vdd_xm[0].lower, RoundMode.GREATER)
+        yym_ridx = self.grid.coord_to_track(yym_layer, res_vdd_xm[0].upper, RoundMode.LESS)
+        num_yym = self._tr_manager.get_num_wires_between(yym_layer, 'sup', yym_lidx, 'sup', yym_ridx, 'sup') + 2
+        num_yym -= (1 - (num_yym & 1))
+        yym_locs = self._tr_manager.spread_wires(yym_layer, ['sup'] * num_yym, yym_lidx, yym_ridx, ('sup', 'sup'))
+        _coords = [self.grid.track_to_coord(yym_layer, _tidx) for _tidx in yym_locs]
+        vss_yym, vdd_yym = [], []
+
+        for sup_xm, sup_yym, cl in [(res_vss_xm, vss_yym, _coords[1::2]), (res_vdd_xm, vdd_yym, _coords[::2])]:
             for warr in sup_xm:
                 for warr_single in warr.warr_iter():
-                    _ym = self.connect_to_tracks(warr_single, tid, min_len_mode=MinLenMode.MIDDLE)
-                    _xxm_tidx = self.grid.coord_to_track(xxm_layer, _ym.middle, RoundMode.NEAREST)
-                    sup_xxm.append(self.connect_to_tracks(_ym, TrackID(xxm_layer, _xxm_tidx, w_sup_xxm)))
-        # get res supplies on yym_layer
-        vdd_yym_lidx = self.grid.coord_to_track(yym_layer, res_vdd_xxm[0].lower, RoundMode.GREATER)
-        vdd_yym_ridx = self.grid.coord_to_track(yym_layer, res_vdd_xxm[0].upper, RoundMode.LESS)
-        yym_locs1 = self._tr_manager.spread_wires(yym_layer, ['sup', 'sup', 'sup'], vdd_yym_lidx, vdd_yym_ridx,
-                                                  ('sup', 'sup'))
-        w_sup_yym = self._tr_manager.get_width(yym_layer, 'sup')
+                    sup_yym.append(self.connect_via_stack(self._tr_manager, warr_single, yym_layer, 'sup',
+                                                          coord_list_o_override=cl))
         yh = self.bound_box.yh
-        vdd_yym = [self.connect_to_tracks(res_vdd_xxm, TrackID(yym_layer, vdd_yym_lidx, w_sup_yym, 2,
-                                                               vdd_yym_ridx - vdd_yym_lidx),
-                                          track_lower=0, track_upper=yh)]
-        vss_yym = [self.connect_to_tracks(res_vss_xxm, TrackID(yym_layer, yym_locs1[1], w_sup_yym), track_lower=0,
-                                          track_upper=yh)]
-        avail_lidx = self._tr_manager.get_next_track(yym_layer, vdd_yym_lidx, 'sup', 'sup', -1)
-        avail_ridx = self._tr_manager.get_next_track(yym_layer, vdd_yym_ridx, 'sup', 'sup', 1)
+        vss_yym = [self.connect_wires(vss_yym, lower=0, upper=yh)[0]]
+        vdd_yym = [self.connect_wires(vdd_yym, lower=0, upper=yh)[0]]
+
+        avail_lidx = self._tr_manager.get_next_track(yym_layer, yym_lidx, 'sup', 'sup', -2)
+        avail_ridx = self._tr_manager.get_next_track(yym_layer, yym_ridx, 'sup', 'sup', 2)
 
         # get decoder supplies on yym_layer
+        w_sup_yym = self._tr_manager.get_width(yym_layer, 'sup')
         for inst in dec_list:
             if inst.bound_box.xm > res_inst.bound_box.xm:
                 yym_ridx = self.grid.coord_to_track(yym_layer, inst.bound_box.xh, RoundMode.LESS)
-                yym_locs = self._tr_manager.spread_wires(yym_layer, ['sup', 'sup', 'sup', 'sup'], avail_ridx, yym_ridx,
+                num_yym = self._tr_manager.get_num_wires_between(yym_layer, 'sup', avail_ridx, 'sup', yym_ridx,
+                                                                 'sup') + 2
+                num_yym -= (num_yym & 1)
+                yym_locs = self._tr_manager.spread_wires(yym_layer, ['sup'] * num_yym, avail_ridx, yym_ridx,
                                                          ('sup', 'sup'))
-                vss_tidx, vdd_tidx = yym_locs[0], yym_locs[1]
+                _coords = [self.grid.track_to_coord(yym_layer, _tidx) for _tidx in yym_locs]
+                vss_coords, vdd_coords = _coords[::2], _coords[1::2]
             else:
                 yym_lidx = self.grid.coord_to_track(yym_layer, inst.bound_box.xl, RoundMode.GREATER)
-                yym_locs = self._tr_manager.spread_wires(yym_layer, ['sup', 'sup', 'sup', 'sup'], yym_lidx, avail_lidx,
+                num_yym = self._tr_manager.get_num_wires_between(yym_layer, 'sup', yym_lidx, 'sup', avail_lidx,
+                                                                 'sup') + 2
+                num_yym -= (num_yym & 1)
+                yym_locs = self._tr_manager.spread_wires(yym_layer, ['sup'] * num_yym, yym_lidx, avail_lidx,
                                                          ('sup', 'sup'))
-                vdd_tidx, vss_tidx = yym_locs[0], yym_locs[1]
-            vdd_yym.append(self.connect_to_tracks(inst.get_pin('VDD', layer=xxm_layer),
-                                                  TrackID(yym_layer, vdd_tidx, w_sup_yym, 2, yym_locs[2] - yym_locs[0]),
-                                                  track_lower=0, track_upper=yh))
-            vss_yym.append(self.connect_to_tracks(inst.get_pin('VSS', layer=xxm_layer),
-                                                  TrackID(yym_layer, vss_tidx, w_sup_yym, 2, yym_locs[2] - yym_locs[0]),
-                                                  track_lower=0, track_upper=yh))
+                _coords = [self.grid.track_to_coord(yym_layer, _tidx) for _tidx in yym_locs]
+                vdd_coords, vss_coords = _coords[::2], _coords[1::2]
+            _vdd = self.connect_via_stack(self._tr_manager, inst.get_pin('VDD', layer=xxm_layer), yym_layer, 'sup',
+                                          coord_list_o_override=vdd_coords)
+            vdd_yym.append(self.extend_wires(_vdd, lower=0, upper=yh)[0])
+            _vss = self.connect_via_stack(self._tr_manager, inst.get_pin('VSS', layer=xxm_layer), yym_layer, 'sup',
+                                          coord_list_o_override=vss_coords)
+            vss_yym.append(self.extend_wires(_vss, lower=0, upper=yh)[0])
 
-        self.add_pin('VDD', vdd_yym, connect=True)
-        self.add_pin('VSS', vss_yym, connect=True)
+        if top_layer == yym_layer:
+            self.add_pin('VDD', vdd_yym, connect=True)
+            self.add_pin('VSS', vss_yym, connect=True)
+        else:
+            vss_top, vdd_top = vss_yym, vdd_yym
+            xh = self.bound_box.xh
+            for _layer in range(yym_layer + 1, top_layer + 1):
+                _idx0 = self.grid.coord_to_track(_layer, vss_top[0].lower, RoundMode.GREATER)
+                _idx1 = self.grid.coord_to_track(_layer, vss_top[0].upper, RoundMode.LESS)
+                _num = self._tr_manager.get_num_wires_between(_layer, 'sup', _idx0, 'sup', _idx1, 'sup') + 2
+                _num -= (_num & 1)
+                _num2 = _num >> 1
+                _locs = self._tr_manager.spread_wires(_layer, ['sup'] * _num, _idx0, _idx1, ('sup', 'sup'))
+                _p = _locs[2] - _locs[0]
+                w_sup = self._tr_manager.get_width(_layer, 'sup')
+                if self.grid.get_direction(_layer) is Orient2D.y:
+                    _upper = yh
+                else:
+                    _upper = xh
+                vss_top = self.connect_to_tracks(vss_top, TrackID(_layer, _locs[0], w_sup, _num2, _p),
+                                                 track_lower=0, track_upper=_upper)
+                vdd_top = self.connect_to_tracks(vdd_top, TrackID(_layer, _locs[1], w_sup, _num2, _p),
+                                                 track_lower=0, track_upper=_upper)
+                self.add_pin('VDD', vdd_top)
+                self.add_pin('VSS', vss_top)
 
         # set schematic parameters
         self.sch_params = dict(
