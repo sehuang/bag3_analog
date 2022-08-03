@@ -24,6 +24,11 @@ class RDAC(TemplateBase):
         tr_widths: WDictType = self.params['tr_widths']
         tr_spaces: SpDictType = self.params['tr_spaces']
         self._tr_manager = TrackManager(self.grid, tr_widths, tr_spaces)
+        self._num_sel = -1
+
+    @property
+    def num_sel(self) -> int:
+        return self._num_sel
 
     @classmethod
     def get_schematic_class(cls) -> Optional[Type[Module]]:
@@ -58,7 +63,7 @@ class RDAC(TemplateBase):
         dec_core: RDACDecoder = dec_master.core
         num_sel_row: int = dec_params['num_sel_row']
         num_sel_col: int = dec_params['num_sel_col']
-        num_sel = num_sel_col + num_sel_row
+        self._num_sel = num_sel = num_sel_col + num_sel_row
         num_in = 1 << num_sel
 
         xxm_layer = dec_core.top_layer
@@ -98,6 +103,7 @@ class RDAC(TemplateBase):
         res_inst = self.add_instance(res_master, xform=Transform(dx=start_x), commit=False)
         _coord1 = min(res_inst.get_pin('VSS')[0].bound_box.ym, res_inst.get_pin('VDD')[0].bound_box.ym)
         off_y = dec_coord0 - res_coord0 + (_coord0 - _coord1)
+        off_y = -(- off_y // h_pitch) * h_pitch
         res_inst.move_by(dy=off_y)
         res_inst.commit()
         tot_h = max(dec_h, res_h + off_y)
@@ -220,8 +226,8 @@ class RDAC(TemplateBase):
                                                  track_lower=0, track_upper=_upper)
                 vdd_top = self.connect_to_tracks(vdd_top, TrackID(_layer, _locs[1], w_sup, _num2, _p),
                                                  track_lower=0, track_upper=_upper)
-                self.add_pin('VDD', vdd_top)
-                self.add_pin('VSS', vss_top)
+            self.add_pin('VDD', vdd_top)
+            self.add_pin('VSS', vss_top)
 
         # set schematic parameters
         self.sch_params = dict(
