@@ -14,7 +14,9 @@ from xbase.layout.enum import MOSWireType
 from xbase.layout.mos.base import MOSBasePlaceInfo, MOSBase
 
 from bag3_digital.layout.stdcells.gates import InvCore, PassGateCore
-from bag3_digital.layout.stdcells.and_complex import AndComplexRow, AndComplexCol
+# from bag3_digital.layout.stdcells.and_complex import AndComplexRow, AndComplexCol
+from bag3_digital.layout.stdcells.and_complex import AndComplexRow
+from bag3_digital.layout.stdcells.and_complex import AndComplexColTall as AndComplexCol
 
 from ..schematic.rdac_decoder_row_col import bag3_analog__rdac_decoder_row_col
 
@@ -306,8 +308,8 @@ class RDACDecoderCol(MOSBase):
             _and_vdd = _and.get_all_port_pins('VDD')
             _and_vss = _and.get_all_port_pins('VSS')
             for _tidx in range(and_ntiles):
-                vdd_hm_list[_tidx].append(_and_vdd[_tidx // 2])
-                vss_hm_list[_tidx].append(_and_vss[-(-_tidx // 2)])
+                vdd_hm_list[_tidx].append(_and_vdd[_tidx])
+                vss_hm_list[_tidx].append(_and_vss[_tidx])
 
             # sel and selb
             bin_idx = f'{col_idx:0b}'.zfill(num_sel)
@@ -340,7 +342,9 @@ class RDACDecoderCol(MOSBase):
                 enb_list.append(_pg.get_pin('enb'))
                 
                 # passgate input
-                _vm_tid = self.tr_manager.get_next_track_obj(_en, 'sig', 'sig', 1)
+                ref_tidx = min(_en.track_id.base_index, _enb.track_id.base_index)
+                _vm_tidx = self.tr_manager.get_next_track(vm_layer, ref_tidx, 'sig', 'sig', -1)
+                _vm_tid = TrackID(vm_layer, _vm_tidx, _en.track_id.width)
                 _in_vm = self.connect_to_tracks(_pg.get_pin('s'), _vm_tid, min_len_mode=MinLenMode.MIDDLE)
                 self.add_pin(f'in<{row_idx * num_cols + col_idx}>', _in_vm)
             self.connect_to_track_wires(en_list, _en)
@@ -351,9 +355,7 @@ class RDACDecoderCol(MOSBase):
         # vm_locs for inverters
         and_in_list = and_master.nand_in_list
         vm_tidx0 = self.grid.coord_to_track(vm_layer, cur_col * self.sd_pitch, RoundMode.NEAREST)
-        _, inv_vm_locs = self.tr_manager.place_wires(vm_layer, ['sig'] * (num_sel + max(and_in_list)), vm_tidx0)
-        selb_vm_locs = inv_vm_locs[:2 * max(and_in_list):2]
-        sel_vm_locs = inv_vm_locs[1:2 * max(and_in_list):2] + inv_vm_locs[2 * max(and_in_list):]
+        _, inv_vm_locs = self.tr_manager.place_wires(vm_layer, ['sig'] * (num_sel + 1), vm_tidx0)
         vm_col = self.grid.track_to_coord(vm_layer, inv_vm_locs[-1]) // self.sd_pitch
 
         # place inverters
@@ -361,10 +363,16 @@ class RDACDecoderCol(MOSBase):
         w_sig_vm = self.tr_manager.get_width(vm_layer, 'sig')
         w_sig_xm = self.tr_manager.get_width(xm_layer, 'sig')
         sel_idx = 0
+        inv_col = cur_col
+
+        _selb_tidx = None
+        _sel_tidx = None
+
         for tile_idx, and_in in enumerate(and_in_list):
-            inv_col = cur_col
             xm_locs = []
+            _and_idx = tile_idx
             for _in_idx in range(and_in):
+                tile_idx = sum(and_in_list[0:_and_idx + 1]) - _in_idx - 1
                 _master = inv_master_o if (_in_idx & 1) else inv_master_e
                 _inv = self.add_tile(_master, tile_idx, inv_col)
 
@@ -374,30 +382,34 @@ class RDACDecoderCol(MOSBase):
 
                 # get xm_layer wires
                 if len(xm_locs) == 0:
-                    vdd_ym = vdd_hm_list[tile_idx][-1].bound_box.ym
-                    vss_ym = vss_hm_list[tile_idx][-1].bound_box.ym
-                    top_sup_tidx = self.grid.coord_to_track(xm_layer, max(vss_ym, vdd_ym), RoundMode.NEAREST)
-                    bot_sup_tidx = self.grid.coord_to_track(xm_layer, min(vss_ym, vdd_ym), RoundMode.NEAREST)
-                    xm_locs = self.tr_manager.spread_wires(xm_layer, ['sup'] + ['sig'] * 2 * and_in + ['sup'],
-                                                           bot_sup_tidx, top_sup_tidx, ('sup', 'sig'))
-                    xm_locs = xm_locs[1:-1]
+                    for _tile_idx in range(num_sel):
+                        vdd_tidx = self.get_track_index(-1, MOSWireType.DS, 'sup', 0, tile_idx=_tile_idx)
+                        vss_tidx = self.get_track_index(0, MOSWireType.DS, 'sup', 0, tile_idx=_tile_idx)
+                        vdd_ym = self.grid.track_to_coord(hm_layer, vdd_tidx)
+                        vss_ym = self.grid.track_to_coord(hm_layer, vss_tidx)
+                        tmp = self.tr_manager.place_wires(xm_layer, ['sig'] * 2, center_coord=(vss_ym + vdd_ym) // 2)
+                        xm_locs.extend(tmp[1])
 
                 _sel_idx = sel_idx + and_in - _in_idx - 1
                 # output
+                if not _selb_tidx: 
+                    _selb_tidx = self.grid.coord_to_track(vm_layer, _inv.bound_box.xl, RoundMode.LESS_EQ)
+                _ref_tidx = _selb_tidx if not _sel_tidx else _sel_tidx
+                _sel_tidx = self.tr_manager.get_next_track(vm_layer, _ref_tidx, 'sig', 'sig', 1)
+
                 _selb = self.connect_to_tracks([_inv.get_pin('pout'), _inv.get_pin('nout')],
-                                               TrackID(vm_layer, selb_vm_locs[_in_idx], w_sig_vm))
+                                               TrackID(vm_layer, _selb_tidx, w_sig_vm))
                 selb_vm_list[_sel_idx].append(_selb)
-                self.connect_to_tracks(selb_vm_list[_sel_idx], TrackID(xm_layer, xm_locs[-2 - 2 * _in_idx], w_sig_xm))
+                self.connect_to_tracks(selb_vm_list[_sel_idx], TrackID(xm_layer, xm_locs[_sel_idx * 2], w_sig_xm))
 
                 # input
                 _sel = self.connect_to_tracks(_inv.get_pin('nin'),
-                                              TrackID(vm_layer, sel_vm_locs[num_sel - _sel_idx - 1], w_sig_vm),
+                                              TrackID(vm_layer, _sel_tidx, w_sig_vm),
                                               track_lower=0)
                 sel_vm_list[_sel_idx].append(_sel)
-                self.connect_to_tracks(sel_vm_list[_sel_idx], TrackID(xm_layer, xm_locs[-1 - 2 * _in_idx], w_sig_xm))
+                self.connect_to_tracks(sel_vm_list[_sel_idx], TrackID(xm_layer, xm_locs[_sel_idx * 2 + 1], w_sig_xm))
                 self.add_pin(f'sel<{_sel_idx}>', _sel, mode=PinMode.LOWER)
 
-                inv_col += inv_ncols + self.min_sep_col
             cur_col1 = max(cur_col1, inv_col)
             sel_idx += and_in
 
