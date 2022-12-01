@@ -30,7 +30,7 @@
 from typing import Any, Dict, List, Optional, Type, cast, Iterable, Union, Tuple
 
 from pybag.enum import RoundMode, Direction
-from pybag.core import BBox
+from pybag.core import BBox, BBoxArray
 
 from bag.util.immutable import Param
 from bag.design.module import Module
@@ -384,26 +384,27 @@ class ResLadder(ResArrayBase):
         vm_layer = hm_layer + 1
         xm_layer = vm_layer + 1
         w_sup_xm = tr_manager.get_width(xm_layer, 'sup')
-        prim_lay_purp = self.tech_cls.tech_info.get_lay_purp_list(conn_layer)[0]
+        prim_lp = self.tech_cls.tech_info.get_lay_purp_list(conn_layer)[0]
 
         # If we have bulk, connect bulk
         # Assume that the bulk port is on conn_layer and can be simply connected
         # to the conn_layer supply lines.
         if self.has_substrate_port:
-            # Hack to check port layer assumption
-            assert self._unit.get_port('BULK').get_single_layer() == prim_lay_purp[0]
-
-            # get_device_port does not return multiple bound boxes. This is work around.
-            bulk_bbox_list = self._unit.get_port('BULK').get_pins()
             for yidx in range(ny):
                 for xidx in range(nx):
-                    hm_list = full_metal_dict[(xidx, yidx)][hm_layer]
-                    for bbox in bulk_bbox_list:
-                        bulk_bbox = cast(BBox, bbox).get_transform(self._get_transform(xidx, yidx))
-                        self.connect_bbox_to_track_wires(
-                            Direction.LOWER, prim_lay_purp, bulk_bbox, hm_list[-1])
-                        self.connect_bbox_to_track_wires(
-                            Direction.LOWER, prim_lay_purp, bulk_bbox, hm_list[0])
+                    hm_warr_list = full_metal_dict[(xidx, yidx)][hm_layer]
+                    bulk_bbox = self.get_device_port(xidx, yidx, 'BULK')
+                    if isinstance(bulk_bbox, BBoxArray) and bulk_bbox.ny > 1:
+                        bulk_bbox0 = bulk_bbox.get_bbox(0)
+                        bulk_bbox1 = bulk_bbox.get_bbox(bulk_bbox.ny - 1)
+                        if yidx & 1:
+                            # Unit cell is placed in MX orientation in odd rows,
+                            # so top & bottom bulk connections are flipped
+                            bulk_bbox0, bulk_bbox1 = bulk_bbox1, bulk_bbox0
+                    else:
+                        bulk_bbox0 = bulk_bbox1 = bulk_bbox
+                    self.connect_bbox_to_track_wires(Direction.LOWER, prim_lp, bulk_bbox0, hm_warr_list[0])
+                    self.connect_bbox_to_track_wires(Direction.LOWER, prim_lp, bulk_bbox1, hm_warr_list[-1])
 
         # Connect hm_layer supplies to vm_layer supplies
         for yidx in range(ny):
@@ -476,7 +477,8 @@ class ResLadder(ResArrayBase):
 
         # Add pins names
         for xidx, xm_warr in enumerate(xm_warr_list):
-            self.add_pin(f'out<{xidx}>', xm_warr)
+            hide = xidx == 0 and not self.grid.tech_info.has_res_metal()  # Can't isolate bottom and idx0
+            self.add_pin(f'out<{xidx}>', xm_warr, hide=hide)
 
         # Draw top and bottom
         bot_unit_info = full_metal_dict[(nx_dum, ny_dum)]
@@ -510,7 +512,8 @@ class ResLadder(ResArrayBase):
         xh = xl + vm_w
         yl = ref_info[vm_layer][2][0].bound_box.ym + hm_w // 2 + ext_y
         yh = yl + mres_l
-        self.add_res_metal(vm_layer, BBox(xl, yl, xh, yh))
+        if self.has_res_metal():
+            self.add_res_metal(vm_layer, BBox(xl, yl, xh, yh))
 
         # Add extra conn if appropriate
         if self.params['top_vdd'] and self._sup_name == 'VDD':

@@ -97,9 +97,26 @@ class bag3_analog__rdac(Module):
         num_sel = num_sel_col + num_sel_row
         sel_suf = f'<{num_sel - 1}:0>'
         num_in = 1 << num_sel
-        in_suf = f'<{num_in - 1}:0>'
-        in_term = f'in{in_suf}'
         sel_pin = f'sel{sel_suf}'
+
+        self.instances['XRES'].design(**res_params)
+        # Check if ladder has idx0
+        has_idx0 = self.instances['XRES'].master.has_idx0
+        if has_idx0:
+            _suf = f'<{num_in - 1}:0>'
+            res_term = f'out{_suf}'
+            dec_net = dec_term = res_net = f'in{_suf}'
+        else:
+            dec_suf = f'<{num_in - 1}:0>' 
+            res_suf = f'<{num_in - 1}:1>'
+            bot_name = "VSS" if self.instances['XRES'].master.bot_vss else "bottom"
+            
+            res_term = f'out{res_suf}'
+            res_net = f'in{res_suf}'
+            dec_term = f'in{dec_suf}'
+            dec_net = f'{res_net},{bot_name}'
+
+        self.reconnect_instance('XRES', [(res_term, res_net), ('VDD', 'VDD'), ('VSS', 'VSS')])
 
         if num_dec == 2:
             sel0_pin = f'sel0{sel_suf}'
@@ -110,15 +127,14 @@ class bag3_analog__rdac(Module):
             self.rename_pin('out', 'out0')
             self.add_pin('out1', TermType.output)
 
-            self.array_instance('XDEC', inst_term_list=[('XDEC0', [(sel_pin, sel0_pin), (in_term, in_term),
+            self.array_instance('XDEC', inst_term_list=[('XDEC0', [(sel_pin, sel0_pin), (dec_term, dec_net),
                                                                    ('out', 'out0')]),
-                                                        ('XDEC1', [(sel_pin, sel1_pin), (in_term, in_term),
+                                                        ('XDEC1', [(sel_pin, sel1_pin), (dec_term, dec_net),
                                                                    ('out', 'out1')])])
         elif num_dec == 1:
             self.rename_pin('sel', sel_pin)
-            self.reconnect_instance('XDEC', [(sel_pin, sel_pin), (in_term, in_term)])
+            self.reconnect_instance('XDEC', [(sel_pin, sel_pin), (dec_term, dec_net)])
         else:
             raise ValueError(f'num_dec={num_dec} is not supported yet. Use 1 or 2.')
 
-        self.instances['XRES'].design(**res_params)
-        self.reconnect_instance('XRES', [(f'out{in_suf}', in_term), ('VDD', 'VDD'), ('VSS', 'VSS')])
+

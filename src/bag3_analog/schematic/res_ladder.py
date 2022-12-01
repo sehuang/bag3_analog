@@ -38,6 +38,9 @@ class bag3_analog__res_ladder(Module):
 
     def __init__(self, database: ModuleDB, params: Param, **kwargs: Any) -> None:
         Module.__init__(self, self.yaml_file, database, params, **kwargs)
+        self.has_idx0 = False  # True if idx 0 is there. Requires metal resistors to isolate idx0 from bottom
+        self.top_vdd = False  # Set in design. Used in RDAC level
+        self.bot_vss = False
 
     @classmethod
     def get_params_info(cls) -> Dict[str, str]:
@@ -65,6 +68,9 @@ class bag3_analog__res_ladder(Module):
     def design(self, w: int, l: int, res_type: str, nx: int, ny, nx_dum: int, ny_dum: int,
                top_vdd: bool, bot_vss: bool, sup_name: str, mres_info: Tuple[int, int, int]) -> None:
 
+        self.top_vdd = top_vdd
+        self.bot_vss = bot_vss
+
         nx_core = nx - nx_dum * 2
         ny_core = ny - ny_dum * 2
         ncore = nx_core * ny_core
@@ -87,11 +93,18 @@ class bag3_analog__res_ladder(Module):
 
         # Design metal resistors
         mres_w, mres_l, mres_layer = mres_info
-        self.instances['XMRES'].design(w=mres_w, l=mres_l, layer=mres_layer)
-        self.reconnect_instance('XMRES', [('PLUS', 'out<0>'), ('MINUS', 'VSS' if bot_vss else 'bottom')])
-
-        # Rename out
-        self.rename_pin('out', f'out<{ncore - 1}:0>')
+        if self.tech_info.has_res_metal():
+            self.instances['XMRES'].design(w=mres_w, l=mres_l, layer=mres_layer)
+            self.reconnect_instance('XMRES', [('PLUS', 'out<0>'), ('MINUS', 'VSS' if bot_vss else 'bottom')])
+            
+            # Rename out
+            self.rename_pin('out', f'out<{ncore - 1}:0>')
+            self.has_idx0 = True
+        else:
+            self.remove_instance('XMRES')
+            self.reconnect_instance_terminal(f'XRES<{ncore - 1}:0>', 'MINUS', f'out<{ncore - 1}:1>,VSS')
+            self.rename_pin('out', f'out<{ncore - 1}:1>')
+            self.has_idx0 = False
 
         if top_vdd:
             self.rename_pin('top', 'VDD')
