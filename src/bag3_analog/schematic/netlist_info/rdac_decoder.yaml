@@ -85,45 +85,6 @@ terminals:
           format: 1
     stype: 2
     ttype: 2
-  in:
-    obj:
-      - 1
-      - inst:
-          lib_name: basic
-          cell_name: ipin
-          view_name: symbol
-          xform:
-            - -650
-            - 190
-            - R0
-          bbox:
-            - -707
-            - 164
-            - -650
-            - 200
-          connections:
-            {}
-          params:
-            {}
-          is_primitive: true
-        attr:
-          layer: 229
-          purpose: 237
-          net: ""
-          origin:
-            - -680
-            - 190
-          alignment: 7
-          orient: R0
-          font: 5
-          height: 10
-          overbar: false
-          visible: true
-          drafting: true
-          attr_type: 0
-          format: 1
-    stype: 0
-    ttype: 0
   out:
     obj:
       - 1
@@ -163,6 +124,45 @@ terminals:
           format: 1
     stype: 0
     ttype: 1
+  in:
+    obj:
+      - 1
+      - inst:
+          lib_name: basic
+          cell_name: ipin
+          view_name: symbol
+          xform:
+            - -650
+            - 190
+            - R0
+          bbox:
+            - -707
+            - 164
+            - -650
+            - 200
+          connections:
+            {}
+          params:
+            {}
+          is_primitive: true
+        attr:
+          layer: 229
+          purpose: 237
+          net: ""
+          origin:
+            - -680
+            - 190
+          alignment: 7
+          orient: R0
+          font: 5
+          height: 10
+          overbar: false
+          visible: true
+          drafting: true
+          attr_type: 0
+          format: 1
+    stype: 0
+    ttype: 0
   sel:
     obj:
       - 1
@@ -484,28 +484,6 @@ shapes:
       drafting: true
       text: sel
 instances:
-  XCOL:
-    lib_name: bag3_analog
-    cell_name: rdac_decoder_row_col
-    view_name: symbol
-    xform:
-      - -190
-      - -70
-      - R0
-    bbox:
-      - -223
-      - -74
-      - 18
-      - 160
-    connections:
-      VDD: VDD
-      VSS: VSS
-      in: in
-      out: mid
-      sel: sel
-    params:
-      {}
-    is_primitive: false
   XROW:
     lib_name: bag3_analog
     cell_name: rdac_decoder_row_col
@@ -515,29 +493,42 @@ instances:
       - -70
       - R0
     bbox:
-      - 127
+      - 129
       - -74
       - 368
       - 160
     connections:
-      VDD: VDD
       VSS: VSS
-      in: mid
+      VDD: VDD
       out: out
+      in: mid
+      sel: sel
+    params:
+      {}
+    is_primitive: false
+  XCOL:
+    lib_name: bag3_analog
+    cell_name: rdac_decoder_row_col
+    view_name: symbol
+    xform:
+      - -190
+      - -70
+      - R0
+    bbox:
+      - -221
+      - -74
+      - 18
+      - 160
+    connections:
+      VSS: VSS
+      VDD: VDD
+      out: mid
+      in: in
       sel: sel
     params:
       {}
     is_primitive: false
 props:
-  connectivityLastUpdated:
-    - 0
-    - 1289
-  lastSchematicExtraction:
-    - 4
-    - time_val: 1627063662
-  net#:
-    - 0
-    - 0
   pin#:
     - 0
     - 5
@@ -547,9 +538,18 @@ props:
   schGeometryVersion:
     - 3
     - sch.ds.gm.1.4
+  lastSchematicExtraction:
+    - 4
+    - time_val: 1627063662
+  connectivityLastUpdated:
+    - 0
+    - 1289
   schXtrVersion:
     - 3
     - sch.10.0
+  net#:
+    - 0
+    - 0
 app_defs:
   _dbLastSavedCounter:
     - 0

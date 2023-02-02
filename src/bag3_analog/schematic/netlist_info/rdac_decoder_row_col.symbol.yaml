@@ -2,37 +2,24 @@ lib_name: bag3_analog
 cell_name: rdac_decoder_row_col
 view_name: symbol
 bbox:
-  - -30
+  - -31
   - -4
   - 208
   - 230
 terminals:
-  VDD:
+  sel:
     obj:
       - 0
       - layer: 229
         purpose: 4294967295
         net: ""
         bbox:
-          - 76
-          - 216
-          - 84
-          - 224
-    stype: 1
-    ttype: 2
-  VSS:
-    obj:
-      - 0
-      - layer: 229
-        purpose: 4294967295
-        net: ""
-        bbox:
-          - 76
           - -4
-          - 84
+          - 56
           - 4
-    stype: 2
-    ttype: 2
+          - 64
+    stype: 0
+    ttype: 0
   in:
     obj:
       - 0
@@ -59,19 +46,32 @@ terminals:
           - 144
     stype: 0
     ttype: 1
-  sel:
+  VDD:
     obj:
       - 0
       - layer: 229
         purpose: 4294967295
         net: ""
         bbox:
+          - 76
+          - 216
+          - 84
+          - 224
+    stype: 1
+    ttype: 2
+  VSS:
+    obj:
+      - 0
+      - layer: 229
+        purpose: 4294967295
+        net: ""
+        bbox:
+          - 76
           - -4
-          - 56
+          - 84
           - 4
-          - 64
-    stype: 0
-    ttype: 0
+    stype: 2
+    ttype: 2
 shapes:
   -
     - 7
@@ -327,22 +327,22 @@ shapes:
 instances:
   {}
 props:
-  interfaceLastChanged:
-    - 4
-    - time_val: 1626736273
-  partName:
-    - 3
-    - rdac_decoder_row_col
   pin#:
     - 0
     - 5
+  interfaceLastChanged:
+    - 4
+    - time_val: 1626736273
+  vendorName:
+    - 3
+    - ""
+  partName:
+    - 3
+    - rdac_decoder_row_col
   portOrder:
     - 5
     - name: ILList
       bin_val: ("out" "VDD" "VSS" "in" "sel")
-  vendorName:
-    - 3
-    - ""
 app_defs:
   _dbLastSavedCounter:
     - 0
