@@ -687,6 +687,34 @@ shapes:
       visible: true
       drafting: true
       text: <*2>pg_out
+  -
+    - 5
+    - layer: 228
+      purpose: 4294967295
+      net: NC
+      points:
+        -
+          - 480
+          - 30
+        -
+          - 520
+          - 30
+  -
+    - 7
+    - layer: 228
+      purpose: 237
+      net: NC
+      origin:
+        - 516
+        - 37
+      alignment: 8
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: NC
 instances:
   XINV:
     lib_name: bag3_digital
@@ -768,6 +796,7 @@ instances:
       - 878
       - 146
     connections:
+      NC: NC
       out: out
       in<1:0>: <*2>pg_out
     params:
@@ -779,16 +808,16 @@ props:
     - 5
   schGeometryLastUpdated:
     - 0
-    - 835
+    - 1019
   schGeometryVersion:
     - 3
     - sch.ds.gm.1.4
   lastSchematicExtraction:
     - 4
-    - time_val: 1675276554
+    - time_val: 1675709291
   connectivityLastUpdated:
     - 0
-    - 835
+    - 1019
   schXtrVersion:
     - 3
     - sch.10.0
@@ -798,10 +827,10 @@ props:
 app_defs:
   _dbLastSavedCounter:
     - 0
-    - 835
+    - 1019
   _dbvCvTimeStamp:
     - 0
-    - 835
+    - 1019
   cdbRevision:
     - 0
     - 227612
