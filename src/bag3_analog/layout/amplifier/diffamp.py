@@ -437,15 +437,17 @@ class DiffAmpSelfBiasedBuffer(MOSBase):
         self.connect_to_track_wires(buf_inst.get_all_port_pins('VDD'), vdd_table[hm_layer])
         self.add_pin('VDD_conn', vdd_table[self.conn_layer], hide=True)
         self.add_pin('VDD_hm', vdd_table[hm_layer], hide=True)
-        self.add_pin('VDD_vm', vdd_table[vm_layer], hide=True)
-        self.add_pin('VDD', self.connect_wires(vdd_table[xm_layer]))
+        if vdd_table[vm_layer]:
+            self.add_pin('VDD_vm', vdd_table[vm_layer], hide=True)
+            self.add_pin('VDD', self.connect_wires(vdd_table[xm_layer]))
 
         vss_table[hm_layer].append(diffamp_inst.get_pin('VSS_hm'))
         self.connect_to_track_wires(buf_inst.get_all_port_pins('VSS'), vss_table[hm_layer])
         self.add_pin('VSS_conn', vss_table[self.conn_layer], hide=True)
         self.add_pin('VSS_hm', vss_table[hm_layer], hide=True)
-        self.add_pin('VSS_vm', vss_table[vm_layer], hide=True)
-        self.add_pin('VSS', self.connect_wires(vss_table[xm_layer]))
+        if vss_table[vm_layer]:
+            self.add_pin('VSS_vm', vss_table[vm_layer], hide=True)
+            self.add_pin('VSS', self.connect_wires(vss_table[xm_layer]))
 
         # 2. export inp, inn
         self.add_pin('v_inp', self.extend_wires(diffamp_inst.get_pin('v_inp'), lower=0))
@@ -503,7 +505,10 @@ class DiffAmpSelfBiasedBufferGuardRing(GuardRing):
         edge_ncol: int = params['edge_ncol']
 
         core_params = params.copy(remove=['pmos_gr', 'nmos_gr', 'edge_ncol'])
-        master = self.new_template(DiffAmpSelfBiasedBuffer, params=core_params)
+        master: DiffAmpSelfBiasedBuffer = self.new_template(DiffAmpSelfBiasedBuffer, params=core_params)
+        hm_layer = master.conn_layer + 1
+        vm_layer = hm_layer + 1
+        xm_layer = vm_layer + 1
 
         sub_sep = master.sub_sep_col
         gr_sub_sep = master.gr_sub_sep_col
@@ -521,5 +526,26 @@ class DiffAmpSelfBiasedBufferGuardRing(GuardRing):
             vss_hm_list.extend(vss_list)
             vdd_hm_list.extend(vdd_list)
 
-        self.connect_to_track_wires(vss_hm_list, inst.get_all_port_pins('VSS_vm'))
-        self.connect_to_track_wires(vdd_hm_list, inst.get_all_port_pins('VDD_vm'))
+        if inst.has_port('VSS_vm'):
+            self.connect_to_track_wires(vss_hm_list, inst.get_all_port_pins('VSS_vm'))
+            self.connect_to_track_wires(vdd_hm_list, inst.get_all_port_pins('VDD_vm'))
+        else:
+            # get supplies on vm_layer
+            vm_l = self.grid.coord_to_track(vm_layer, self.bound_box.xl, RoundMode.GREATER_EQ)
+            _, vm_locs0 = self.tr_manager.place_wires(vm_layer, ['sup', 'sup'], vm_l, 0)
+            vm_r = self.grid.coord_to_track(vm_layer, self.bound_box.xh, RoundMode.LESS_EQ)
+            _, vm_locs1 = self.tr_manager.place_wires(vm_layer, ['sup', 'sup'], vm_r, -1)
+            w_sup_vm = self.tr_manager.get_width(vm_layer, 'sup')
+            vss_vm = self.connect_to_tracks(vss_hm_list + inst.get_all_port_pins('VSS_hm'),
+                                            TrackID(vm_layer, vm_locs0[0], w_sup_vm, 2, vm_locs1[-1] - vm_locs0[0]))
+            vdd_vm = self.connect_to_tracks(vdd_hm_list + inst.get_all_port_pins('VDD_hm'),
+                                            TrackID(vm_layer, vm_locs0[-1], w_sup_vm, 2, vm_locs1[0] - vm_locs0[-1]))
+
+            # get supplies on xm_layer
+            w_sup_xm = self.tr_manager.get_width(xm_layer, 'sup')
+            xm_b = self.grid.coord_to_track(xm_layer, self.bound_box.yl, RoundMode.GREATER_EQ)
+            vss_xm = self.connect_to_tracks(vss_vm, TrackID(xm_layer, xm_b, w_sup_xm))
+            self.add_pin('VSS', vss_xm)
+            xm_t = self.grid.coord_to_track(xm_layer, self.bound_box.yh, RoundMode.LESS_EQ)
+            vdd_xm = self.connect_to_tracks(vdd_vm, TrackID(xm_layer, xm_t, w_sup_xm))
+            self.add_pin('VDD', vdd_xm)
