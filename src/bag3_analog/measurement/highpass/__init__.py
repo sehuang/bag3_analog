@@ -28,7 +28,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from typing import Type, Union, Dict, Optional, Any, cast, Sequence, Mapping
+from typing import Dict, Optional, Any, cast, Sequence, Mapping
 from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
@@ -36,11 +36,8 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import InterpolatedUnivariateSpline
 import scipy.signal as signal
 
-from bag.simulation.measure import MeasurementManager, MeasInfo
-from bag.simulation.core import TestbenchManager
-from bag.simulation.data import SimNetlistInfo, netlist_info_from_dict
-from bag.simulation.cache import SimulationDB, DesignInstance, SimResults, MeasureResult
-from bag.design.module import Module
+from bag.simulation.measure import MeasurementManager
+from bag.simulation.cache import SimulationDB, DesignInstance
 from bag.concurrent.util import GatherHelper
 
 from bag3_testbenches.measurement.ac.base import ACTB
@@ -56,17 +53,9 @@ class HighpassACMeas(MeasurementManager):
     def plot(self):
         return self.specs.get('plot', False)
 
-    def get_sim_info(self, sim_db: SimulationDB, dut: DesignInstance, cur_info: MeasInfo):
-        raise NotImplementedError
-
-    def initialize(self, sim_db: SimulationDB, dut: DesignInstance):
-        raise NotImplementedError
-
-    def process_output(self, cur_info: MeasInfo, sim_results: Union[SimResults, MeasureResult]):
-        raise NotImplementedError
-
     async def async_measure_performance(self, name: str, sim_dir: Path, sim_db: SimulationDB,
-                                        dut: Optional[DesignInstance]) -> Mapping[str, Any]:
+                                        dut: Optional[DesignInstance],
+                                        harnesses: Optional[Sequence[DesignInstance]] = None) -> Mapping[str, Any]:
         """Skip existing methods and just do everything here"""
         helper = GatherHelper()
         for idx in range(4):
@@ -212,7 +201,8 @@ class HighpassACMeas(MeasurementManager):
             cpb=cpb,
         )
 
-    async def async_meas_tf(self, name: str, sim_dir: Path, sim_db: SimulationDB, dut: Optional[DesignInstance]) -> Dict[str, Any]:
+    async def async_meas_tf(self, name: str, sim_dir: Path, sim_db: SimulationDB,
+                            dut: Optional[DesignInstance]) -> Dict[str, Any]:
 
         if self.bias_diff:
             src_list = [dict(lib='analogLib', type='vsin', value='1m', conns={'PLUS': 'inp', 'MINUS': 'VSS'})]
