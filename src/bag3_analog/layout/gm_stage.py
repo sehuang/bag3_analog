@@ -59,9 +59,14 @@ class GmStage(MOSBase):
         seg_tail = seg_dict['tail']
         if seg_tail % 2:
             raise ValueError(f'This generator requires seg_tail={seg_tail} to be even.')
-        seg_tot = max(seg_tail, 2 * seg_gm)
+        if self.can_abut_mos:
+            seg_sep = 0
+        else:
+            seg_sep = 4
+        seg_tot = max(seg_tail, 2 * seg_gm + seg_sep)
         seg_tot2 = seg_tot // 2
         seg_tail2 = seg_tail // 2
+        seg_sep2 = seg_sep // 2
 
         # --- Placement --- #
         if seg_tail2 % 2 == 1:
@@ -77,8 +82,8 @@ class GmStage(MOSBase):
         w_tail, th_tail = _row_info.width, _row_info.threshold
 
         # gm cells
-        gm_left_inst = self.add_mos(ridx_gm, seg_tot2, seg_gm, tile_idx=tile_logic, w=w, flip_lr=True)
-        gm_right_inst = self.add_mos(ridx_gm, seg_tot2, seg_gm, tile_idx=tile_logic, w=w)
+        gm_left_inst = self.add_mos(ridx_gm, seg_tot2 - seg_sep2, seg_gm, tile_idx=tile_logic, w=w, flip_lr=True)
+        gm_right_inst = self.add_mos(ridx_gm, seg_tot2 + seg_sep2, seg_gm, tile_idx=tile_logic, w=w)
         _row_info = _pinfo.get_row_place_info(ridx_gm).row_info
         w_gm, th_gm = _row_info.width, _row_info.threshold
 
@@ -97,7 +102,10 @@ class GmStage(MOSBase):
 
         # 1. source terminals of tail transistor go to supplies
         tap_tid = self.get_track_id(0, MOSWireType.DS, 'sup', tile_idx=tile_tap)
-        tap_hm = self.connect_to_tracks([tail_inst[sup_term], tap_conn], tap_tid)
+        if self.can_extend_ds_conn(g_side=True, threshold=th_tail):
+            tap_hm = self.connect_to_tracks([tail_inst[sup_term], tap_conn], tap_tid)
+        else:
+            raise NotImplementedError('Redo routing.')
         tap_xxm = self.connect_via_stack(tr_manager, tap_hm, xxm_layer, 'sup', alternate_o=True)
         self.add_pin('VSS', tap_xxm)
 
@@ -105,9 +113,18 @@ class GmStage(MOSBase):
         # improve connection
         tail_tid0 = self.get_track_id(ridx_tail, MOSWireType.DS, 'sig_hs', tile_idx=tile_logic)
         tail_tid1 = self.get_track_id(ridx_gm, MOSWireType.DS, 'sig_hs', wire_idx=-1, tile_idx=tile_logic)
-        tail0 = self.connect_to_tracks([gm_left_inst.s, gm_right_inst.s, tail_inst[share_term]], tail_tid0,
-                                       wire_lower=tail_inst[share_term].lower)
-        tail1 = self.connect_to_tracks([gm_left_inst.s, gm_right_inst.s, tail_inst[share_term]], tail_tid1)
+        tail1_vm = None
+        if self.can_extend_ds_conn(g_side=False, threshold=th_gm):
+            tail0 = self.connect_to_tracks([gm_left_inst.s, gm_right_inst.s, tail_inst[share_term]], tail_tid0,
+                                           wire_lower=tail_inst[share_term].lower)
+            tail1 = self.connect_to_tracks([gm_left_inst.s, gm_right_inst.s, tail_inst[share_term]], tail_tid1)
+        else:
+            tail0 = self.connect_to_tracks(tail_inst[share_term], tail_tid0, wire_lower=tail_inst[share_term].lower)
+            tail1 = self.connect_to_tracks([gm_left_inst.s, gm_right_inst.s], tail_tid1)
+            # connect on vm_layer
+            tail1_vm = self.connect_via_stack(self.tr_manager, tail1, vm_layer, 'sig_hs',
+                                              mlm_dict={vm_layer: MinLenMode.LOWER})
+            self.connect_to_track_wires(tail0, tail1_vm)
         self.add_pin('v_tail', [tail0, tail1], hide=is_dum or not export_tail)
 
         # 3. gate terminals of tail transistor
@@ -150,8 +167,25 @@ class GmStage(MOSBase):
                                        min(l_coord, drain_left.upper), width=drain_tid.width)
         drain_right_hm = self.add_wires(hm_layer, drain_tid.base_index, max(r_coord, drain_right.lower),
                                         drain_right.upper, width=drain_tid.width)
-        drain_left_xxm = self.connect_via_stack(tr_manager, drain_left_hm, xxm_layer, 'sig_hs', 0, -1, mlm_drain)
-        drain_right_xxm = self.connect_via_stack(tr_manager, drain_right_hm, xxm_layer, 'sig_hs', 0, 1, mlm_drain)
+        if self.can_extend_ds_conn(g_side=False, threshold=th_gm):
+            drain_left_xxm = self.connect_via_stack(tr_manager, drain_left_hm, xxm_layer, 'sig_hs', 0, -1, mlm_drain)
+            drain_right_xxm = self.connect_via_stack(tr_manager, drain_right_hm, xxm_layer, 'sig_hs', 0, 1, mlm_drain)
+        else:
+            # don't collide with vm_layer for tail connection
+            coords_l, coords_r = [], []
+            for _widx in range((tail1_vm.track_id.num - 1) // 2):
+                _tidx0 = self.tr_manager.get_next_track(vm_layer, tail1_vm[_widx].track_id.base_index,
+                                                        'sig_hs', 'sig_hs', 1)
+                coords_l.append(self.grid.track_to_coord(vm_layer, _tidx0))
+                _tidx1 = self.tr_manager.get_next_track(vm_layer, tail1_vm[-1 - _widx].track_id.base_index,
+                                                        'sig_hs', 'sig_hs', -1)
+                coords_r.insert(0, self.grid.track_to_coord(vm_layer, _tidx1))
+            drain_left_xm = self.connect_via_stack(tr_manager, drain_left_hm, xm_layer, 'sig_hs', 0, -1, mlm_drain,
+                                                   coord_list_o_override=coords_l)
+            drain_right_xm = self.connect_via_stack(tr_manager, drain_right_hm, xm_layer, 'sig_hs', 0, 1, mlm_drain,
+                                                    coord_list_o_override=coords_r)
+            drain_left_xxm = self.connect_via_stack(tr_manager, drain_left_xm, xxm_layer, 'sig_hs', 0, -1, mlm_drain)
+            drain_right_xxm = self.connect_via_stack(tr_manager, drain_right_xm, xxm_layer, 'sig_hs', 0, 1, mlm_drain)
         self.add_pin('i_outm', drain_left_xxm, hide=is_dum)
         self.add_pin('i_outp', drain_right_xxm, hide=is_dum)
 

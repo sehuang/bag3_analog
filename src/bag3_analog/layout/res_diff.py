@@ -75,8 +75,8 @@ class ResDiff(ResArrayBase):
 
         # connect XRP and XRM from vm_layer to xxm_layer
         for _bot, _top, _suf in [(rp_bot, rp_top, 'p'), (rm_bot, rm_top, 'm')]:
-            _in = self.connect_stack(self.tr_manager, _bot, xxm_layer, 'sig')
-            _out = self.connect_stack(self.tr_manager, _top, xxm_layer, 'sig')
+            _in = self.connect_stack(self.tr_manager, _bot, xxm_layer, 'sig', xm_layer)
+            _out = self.connect_stack(self.tr_manager, _top, xxm_layer, 'sig', xm_layer)
             self.add_pin(f'{_suf}_in', _in)
             self.add_pin(f'{_suf}_out', _out)
 
@@ -94,9 +94,11 @@ class ResDiff(ResArrayBase):
             sub_type=sub_type,
         )
 
-    def connect_stack(self, tr_manager: TrackManager, warr: WireArray, top_layer: int, w_type: str = 'sig'):
+    def connect_stack(self, tr_manager: TrackManager, warr: WireArray, top_layer: int, w_type: str = 'sig',
+                      mid_layer: int = -1):
         # this is different from connect_via_stack() as it does not connect the intermediate wires to reduce cap
         top_warr = []
         for _warr in warr.warr_iter():
-            top_warr.append(self.connect_via_stack(tr_manager, _warr, top_layer, w_type))
+            _mid = self.connect_via_stack(tr_manager, _warr, mid_layer, w_type)
+            top_warr.append(self.connect_via_stack(tr_manager, _mid, top_layer, w_type))
         return self.connect_wires(top_warr)[0]

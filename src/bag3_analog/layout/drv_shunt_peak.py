@@ -15,7 +15,7 @@ from xbase.layout.array.top import ArrayBaseWrapper
 
 from bag3_magnetics.layout.inductor.ind_diff_wrap import IndDiffWrap
 
-from .gm_stage import GmStageGR
+from .gm_stage import GmStageGR, GmStage
 from .res_diff import ResDiff
 
 from ..schematic.drv_shunt_peak import bag3_analog__drv_shunt_peak, LayMode
@@ -50,7 +50,8 @@ class DrvShuntPeak(TemplateBase):
     def draw_layout(self) -> None:
         # make masters
         gm_params: Mapping[str, Any] = self.params['gm_params']
-        gm_master = self.new_template(GenericWrapper, params=dict(cls_name=GmStageGR.get_qualified_name(),
+        gm_cls = GmStageGR if self.has_guard_ring else GmStage
+        gm_master = self.new_template(GenericWrapper, params=dict(cls_name=gm_cls.get_qualified_name(),
                                                                   params=gm_params, export_hidden=True))
         gm_bbox = gm_master.bound_box
 
@@ -94,16 +95,21 @@ class DrvShuntPeak(TemplateBase):
             for pin in ('v_inp', 'v_inm', 'v_tail_g', 'v_tail'):
                 self.reexport(gm.get_port(pin))
 
-            for pin in ('i_outp', 'i_outm', 'VSS', 'VDD'):
+            for pin in ('i_outp', 'i_outm', 'VSS'):
                 # TODO: routing
                 self.reexport(gm.get_port(pin), connect=True)
+            if gm.has_port('VDD'):
+                # TODO: routing
+                self.reexport(gm.get_port('VDD'), connect=True)
 
         # res_diff
         if gen_res:
             for term, net in [('p_in', 'i_outp'), ('m_in', 'i_outm'), ('p_out', 'ind_p'), ('m_out', 'ind_m')]:
                 # TODO: routing
                 self.reexport(res.get_port(term), net_name=net, connect=True)
-            self.reexport(res.get_port('VDD'), connect=True)
+            for pin in ('VDD', 'VSS'):
+                if res.has_port(pin):
+                    self.reexport(res.get_port(pin), connect=True)
 
         # ind
         if gen_ind:

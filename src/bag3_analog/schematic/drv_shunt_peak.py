@@ -110,6 +110,9 @@ class bag3_analog__drv_shunt_peak(Module):
         gen_res = lay_mode is LayMode.TOP or lay_mode is LayMode.EXT
         if gen_res:
             self.instances['XRES'].design(**res)
+            sub_type: str = res['sub_type']
+            if sub_type == 'ptap':
+                self.reconnect_instance_terminal('XRES', 'VSS', 'VSS')
         else:
             self.remove_instance('XRES')
             remove_pins.extend(['VDD'])
