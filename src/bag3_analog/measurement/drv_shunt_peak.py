@@ -269,6 +269,8 @@ class DrvShuntPeakTranMeas(MeasurementManager):
         fig, ax_list = plt.subplots(len(sim_envs), len(v_incm_swp) * len(v_tail_g_swp))
         if not isinstance(ax_list, np.ndarray):
             ax_list = np.array([ax_list]).reshape((1, 1))
+        if len(v_incm_swp) * len(v_tail_g_swp) == 1:
+            ax_list = ax_list.reshape(len(sim_envs), 1)
 
         for jdx, sim_env in enumerate(sim_envs):
             for kdx, v_incm in enumerate(v_incm_swp):

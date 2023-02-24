@@ -82,9 +82,9 @@ class DrvShuntPeak(TemplateBase):
         y_res = y_gm
         res = self.add_instance(res_master, xform=Transform(dx=x_res, dy=y_res, mode=Orientation.MY), commit=gen_res)
 
-        x_ind = (w_tot - ind_sh_bbox.w) // 2
+        x_ind = (w_tot + ind_sh_bbox.w) // 2
         y_ind = y_res + res_bbox.h
-        ind = self.add_instance(ind_sh_master, xform=Transform(dx=x_ind, dy=y_ind), commit=gen_ind)
+        ind = self.add_instance(ind_sh_master, xform=Transform(dx=x_ind, dy=y_ind, mode=Orientation.MY), commit=gen_ind)
 
         h_tot = ind.bound_box.yh
         self.set_size_from_bound_box(ind_layer, BBox(0, 0, w_tot, h_tot), round_up=True)
