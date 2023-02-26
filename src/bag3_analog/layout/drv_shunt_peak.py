@@ -134,16 +134,16 @@ class DrvShuntPeak(TemplateBase):
             p_0, p_1 = p_in.lower, p_in.upper
             m_0, m_1 = m_in.lower, m_in.upper
             p_in = self.connect_via_stack(self._tr_manager, p_in, gm_top_layer, 'sig_hs',
-                                          coord_list_p_override=[_coord0])
+                                          coord_list_p_override=[_coord0], alignment_o=1)
             p_in = self.extend_wires(p_in, lower=p_0, upper=p_1)[0]
             m_in = self.connect_via_stack(self._tr_manager, m_in, gm_top_layer, 'sig_hs',
-                                          coord_list_p_override=[_coord0])
+                                          coord_list_p_override=[_coord0], alignment_o=-1)
             m_in = self.extend_wires(m_in, lower=m_0, upper=m_1)[0]
             p_out = self.connect_via_stack(self._tr_manager, p_out, gm_top_layer, 'sig_hs',
-                                           coord_list_p_override=[_coord1], alternate_o=alternate_o)
+                                           coord_list_p_override=[_coord1], alternate_o=alternate_o, alignment_o=1)
             p_out = self.extend_wires(p_out, lower=p_0, upper=p_1)[0]
             m_out = self.connect_via_stack(self._tr_manager, m_out, gm_top_layer, 'sig_hs',
-                                           coord_list_p_override=[_coord1], alternate_o=alternate_o)
+                                           coord_list_p_override=[_coord1], alternate_o=alternate_o, alignment_o=-1)
             m_out = self.extend_wires(m_out, lower=m_0, upper=m_1)[0]
 
         # now i_outp and p_in are on the same layer
@@ -159,10 +159,12 @@ class DrvShuntPeak(TemplateBase):
             self.add_pin('i_outm', i_outm)
 
         # routing from res_diff to inductors
+        _tidx = self.grid.coord_to_track(_conn_layer + 1, p_out.bound_box.ym, RoundMode.GREATER)
+        _coord = self.grid.track_to_coord(_conn_layer + 1, _tidx)
         p_out = self.connect_via_stack(self._tr_manager, p_out, _conn_layer + 1, 'sig_hs',
-                                       mlm_dict={_conn_layer: MinLenMode.UPPER})
+                                       coord_list_p_override=[_coord], mlm_dict={_conn_layer: MinLenMode.UPPER})
         m_out = self.connect_via_stack(self._tr_manager, m_out, _conn_layer + 1, 'sig_hs',
-                                       mlm_dict={_conn_layer: MinLenMode.UPPER})
+                                       coord_list_p_override=[_coord], mlm_dict={_conn_layer: MinLenMode.UPPER})
         ind_p: BBox = ind.get_pin('P1')
         ind_m: BBox = ind.get_pin('P3')
         ind_lp = self.grid.tech_info.get_lay_purp_list(ind_layer)[0]
