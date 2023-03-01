@@ -10,6 +10,8 @@
     <orderEntry type="module" module-name="xbase_bcad" />
     <orderEntry type="module" module-name="BAG_framework" />
     <orderEntry type="module" module-name="bag3_testbenches" />
+    <orderEntry type="module" module-name="bag3_digital" />
+    <orderEntry type="module" module-name="bag3_magnetics" />
   </component>
   <component name="PackageRequirementsSettings">
     <option name="requirementsPath" value="" />
