@@ -176,7 +176,9 @@ class DrvShuntPeakTranMeas(MeasurementManager):
                     plot_results['eye'][jdx].append(eye_res)
                     idx += 1
 
-        # self.plot_results(plot_results)
+        plot_eye: bool = self.specs.get('plot_eye', False)
+        if plot_eye:
+            self.plot_results(plot_results)
         return results
 
     async def async_meas_pvt_case(self, name: str, sim_dir: Path, sim_db: SimulationDB, dut: Optional[DesignInstance],
@@ -279,7 +281,7 @@ class DrvShuntPeakTranMeas(MeasurementManager):
                     ax = ax_list[jdx, eidx]
                     eye_results: EyeResults = results['eye'][jdx][eidx]
                     eye_results.plot(ax)
-                    ax.set_title(f'{sim_env}; v_incm={v_incm}; v_tail_g={v_tail_g}')
+                    ax.set_title(f'{sim_env}; v_incm={v_incm} V; v_tail_g={v_tail_g} V')
 
         plt.tight_layout()
         plt.show()
