@@ -144,7 +144,8 @@ class RDAC(TemplateBase):
             _out1 = dec1_inst.get_pin('out')
             if isinstance(_out1, BBox):
                 _ym_tidx1 = self.grid.coord_to_track(ym_layer, _out1.xm)
-                _out1_warr = self.add_wires(ym_layer, _ym_tidx1, lower=_out1.yl, upper=self.bound_box.yh, width=w_out_ym)
+                _out1_warr = self.add_wires(ym_layer, _ym_tidx1, lower=_out1.yl, upper=self.bound_box.yh,
+                                            width=w_out_ym)
             else:
                 _out1_warr = self.extend_wires(_out1, upper=self.bound_box.yh)
 
@@ -152,7 +153,6 @@ class RDAC(TemplateBase):
         else:  # num_dec == 1:
             self.add_pin('out', _out0_warr, mode=PinMode.UPPER)
     
-
         # res_ladder output to rdac_decoder input
         for idx in range(num_in):
             self.connect_bbox_to_track_wires(Direction.LOWER, vm_lp, dec0_inst.get_pin(f'in<{idx}>'),
@@ -199,8 +199,13 @@ class RDAC(TemplateBase):
         for _layer in range(xxm_layer + 1, top_layer + 1):
             vdd_top, vss_top = self.do_power_fill(_layer, self._tr_manager, vdd_top, vss_top)
 
-        self.add_pin('VDD', vdd_top, connect=True)
-        self.add_pin('VSS', vss_top, connect=True)
+        for sup_top, sup_name in [(vdd_top, 'VDD'), (vss_top, 'VSS')]:
+            sup = self.connect_wires(sup_top)
+            if len(sup) == 1:
+                self.add_pin(sup_name, sup[0])
+            else:
+                self.add_pin(sup_name, sup_top, connect=True)
+                self.warn(f'{sup_name} is a list of WireArrays with num = 1, so use get_all_port_pins()')
 
         # set schematic parameters
         self.sch_params = dict(

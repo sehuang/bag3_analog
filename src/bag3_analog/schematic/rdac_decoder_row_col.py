@@ -127,7 +127,7 @@ class bag3_analog__rdac_decoder_row_col(Module):
         in_suf = f'<{num_in - 1}:0>'
         self.rename_pin('in', f'in{in_suf}')
 
-        if decoder_type is 'row':
+        if decoder_type == 'row':
             # passgates
             self.rename_instance('XPG', f'XPG{in_suf}', [('s', f'in{in_suf}'), ('d', f'pg_out{in_suf}'),
                                                          ('en', f'en{in_suf}'), ('enb', f'enb{in_suf}')])
