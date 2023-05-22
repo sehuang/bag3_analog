@@ -483,8 +483,7 @@ class ResLadder(ResArrayBase):
         # Add pins names
         for xidx, xm_warr in enumerate(xm_warr_list):
             hide = xidx == 0 and not self.grid.tech_info.has_res_metal()  # Can't isolate bottom and idx0
-            #FIXME: Tapeout hack
-            self.add_pin(f'out<{xidx}>', xm_warr, hide=True)
+            self.add_pin(f'out<{xidx}>', xm_warr, hide=hide)
 
         # Draw top and bottom
         bot_unit_info = full_metal_dict[(nx_dum, ny_dum)]
