@@ -454,7 +454,7 @@ shapes:
           - -50
 instances:
   XOTA:
-    lib_name: bag_ldo
+    lib_name: bag3_analog
     cell_name: ota
     view_name: symbol
     xform:
@@ -477,7 +477,7 @@ instances:
       {}
     is_primitive: false
   XPMOS:
-    lib_name: bag_ldo
+    lib_name: bag3_analog
     cell_name: power_pmos
     view_name: symbol
     xform:
@@ -519,29 +519,35 @@ instances:
 props:
   connectivityLastUpdated:
     - 0
-    - 529
+    - 741
   instance#:
     - 0
     - 4
   lastSchematicExtraction:
     - 4
-    - time_val: 1683682178
+    - time_val: 1685040020
+  net#:
+    - 0
+    - 1
   pin#:
     - 0
     - 4
   schGeometryLastUpdated:
     - 0
-    - 529
+    - 741
   schGeometryVersion:
     - 3
     - sch.ds.gm.1.4
+  schXtrVersion:
+    - 3
+    - sch.10.0
 app_defs:
   _dbLastSavedCounter:
     - 0
-    - 529
+    - 741
   _dbvCvTimeStamp:
     - 0
-    - 529
+    - 741
   cdbRevision:
     - 0
     - 227612

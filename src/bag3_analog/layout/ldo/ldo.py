@@ -162,7 +162,14 @@ class LDO(TemplateBase):
         new_hm = self.connect_to_tracks(out_vm, new_tid)
         self.connect_to_track_wires(new_hm, self.get_vertical_warr(pwr_mos.get_all_port_pins('G'), y_layers[0]))
 
-        self.set_size_from_bound_box(top_layer, BBox(0, 0, pwr_mos.bound_box.xh, pwr_mos.bound_box.yh))
+        if self.grid.get_direction(top_layer) == Orient2D.x:
+            x_pitch, y_pitch = self.grid.get_size_pitch(top_layer)
+        else:
+            y_pitch, x_pitch = self.grid.get_size_pitch(top_layer)
+        self.set_size_from_bound_box(top_layer, BBox(0, 0,
+                                                     self.align_to_pitch(pwr_mos.bound_box.xh, x_pitch),
+                                                     self.align_to_pitch(pwr_mos.bound_box.yh, y_pitch))
+        )
 
         cur_vdd = pwr_mos.get_all_port_pins('VDD') + ota.get_all_port_pins('VDD')
         cur_vvdd = pwr_mos.get_all_port_pins('VDD_OUT')
