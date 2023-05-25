@@ -96,5 +96,7 @@ class bag3_analog__ldo(Module):
 
         self.instances['XOTA'].design(**ota_params)
         self.instances['XRES'].design(**res_params)
-        # Apparently the resistor PLUS terminal gets automatically renamed to VDD???
-        self.reconnect_instance_terminal('XRES', 'VDD', 'VDD')
+        if 'VSS' in self.instances['XRES'].master.pins:
+            self.reconnect_instance_terminal('XRES', 'VSS', 'VSS')
+        elif 'VDD' in self.instances['XRES'].master.pins:
+            self.reconnect_instance_terminal('XRES', 'VDD', 'VDD')

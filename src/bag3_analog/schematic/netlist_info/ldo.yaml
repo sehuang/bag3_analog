@@ -165,10 +165,26 @@ terminals:
     ttype: 0
 shapes:
   -
+    - 7
+    - layer: 228
+      purpose: 237
+      net: iref
+      origin:
+        - -370
+        - 7
+      alignment: 5
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: iref
+  -
     - 5
     - layer: 228
       purpose: 4294967295
-      net: net1
+      net: iref
       points:
         -
           - -400
@@ -180,7 +196,7 @@ shapes:
     - 5
     - layer: 228
       purpose: 4294967295
-      net: net1
+      net: iref
       points:
         -
           - -400
@@ -444,7 +460,7 @@ shapes:
     - 5
     - layer: 228
       purpose: 4294967295
-      net: net1
+      net: iref
       points:
         -
           - -550
@@ -471,7 +487,7 @@ instances:
       VSS: VSS
       in_n: VVDD
       in_p: v_set
-      iref: net1
+      iref: iref
       out: out
     params:
       {}
@@ -511,7 +527,7 @@ instances:
       - 194
     connections:
       BULK: VSS
-      MINUS: net1
+      MINUS: iref
       PLUS: VDD
     params:
       {}
@@ -519,13 +535,13 @@ instances:
 props:
   connectivityLastUpdated:
     - 0
-    - 741
+    - 949
   instance#:
     - 0
     - 4
   lastSchematicExtraction:
     - 4
-    - time_val: 1685040020
+    - time_val: 1685040267
   net#:
     - 0
     - 1
@@ -534,7 +550,7 @@ props:
     - 4
   schGeometryLastUpdated:
     - 0
-    - 741
+    - 949
   schGeometryVersion:
     - 3
     - sch.ds.gm.1.4
@@ -544,10 +560,10 @@ props:
 app_defs:
   _dbLastSavedCounter:
     - 0
-    - 741
+    - 949
   _dbvCvTimeStamp:
     - 0
-    - 741
+    - 949
   cdbRevision:
     - 0
     - 227612

@@ -120,13 +120,30 @@ class LDO(TemplateBase):
         y_layers = range(x_layers[0] + 1, top_layer + 1, 2)
         vm_pitch, hm_pitch = self.grid.get_size_pitch(y_layers[0])
 
+        ldo_h = max(res_h, ota_h, pwr_mos_h)
+        ldo_w = res_w + ota_w + pwr_mos_w
+
+        if ldo_h == pwr_mos_h:
+            pwr_mos_y = 0
+            ota_y = (pwr_mos_h // 2) - (ota_h // 2)
+            res_y = (pwr_mos_h // 2) - (res_h // 2)
+        elif ldo_h == ota_h:
+            pwr_mos_y = (ota_h // 2) - (pwr_mos_h // 2)
+            ota_y = 0
+            res_y = (ota_h // 2) - (res_h // 2)
+        else:
+            pwr_mos_y = (res_h // 2) - (pwr_mos_h // 2)
+            ota_y = (res_h // 2) - (ota_h // 2)
+            res_y = 0
+
         pwr_mos = self.add_instance(pwr_mos_master, inst_name='XPWR',
-                                    xform=Transform(self.align_to_pitch(ota_w + res_w, vm_pitch), 0))
+                                    xform=Transform(self.align_to_pitch(ota_w + res_w, vm_pitch),
+                                                    self.align_to_pitch(pwr_mos_y, hm_pitch)))
         ota = self.add_instance(ota_master, inst_name='XOTA',
                                 xform=Transform(self.align_to_pitch(res_w, vm_pitch),
-                                                self.align_to_pitch((pwr_mos_h // 2) - (ota_h // 2), hm_pitch)))
+                                                self.align_to_pitch(ota_y, hm_pitch)))
         res = self.add_instance(res_master, inst_name='XRES',
-                                xform=Transform(0, self.align_to_pitch((pwr_mos_h // 2) - (res_h // 2), hm_pitch)))
+                                xform=Transform(0, self.align_to_pitch(res_y, hm_pitch)))
 
 
         # connect instances
@@ -167,8 +184,8 @@ class LDO(TemplateBase):
         else:
             y_pitch, x_pitch = self.grid.get_size_pitch(top_layer)
         self.set_size_from_bound_box(top_layer, BBox(0, 0,
-                                                     self.align_to_pitch(pwr_mos.bound_box.xh, x_pitch),
-                                                     self.align_to_pitch(pwr_mos.bound_box.yh, y_pitch))
+                                                     self.align_to_pitch(ldo_w, x_pitch),
+                                                     self.align_to_pitch(ldo_h, y_pitch))
         )
 
         cur_vdd = pwr_mos.get_all_port_pins('VDD') + ota.get_all_port_pins('VDD')
@@ -198,8 +215,8 @@ class LDO(TemplateBase):
         # hm_ota_fill = self.do_multi_power_fill(x_layers[0], tr_manager, sup_list, bound_box=ota_slice)
         hm_ota_fill = sup_list
         ## vm_layer
-        vm_pwr_mos_fill = self.do_multi_power_fill(y_layers[0], tr_manager, hm_pwr_mos_fill, bound_box=pwr_mos.bound_box)
-        vm_ota_fill = self.do_multi_power_fill(y_layers[0], tr_manager, hm_ota_fill, bound_box=ota.bound_box)
+        vm_pwr_mos_fill = self.do_multi_power_fill(y_layers[0], tr_manager, hm_pwr_mos_fill, bound_box=pwr_mos_slice)
+        vm_ota_fill = self.do_multi_power_fill(y_layers[0], tr_manager, hm_ota_fill, bound_box=ota_slice, y_margin=3 * self.grid.get_track_pitch(y_layers[0]))
         ## xm_layer
         # FIXME: Margins are magic numbers, get real ones eventually
         xm_pwr_mos_fill = self.do_multi_power_fill(x_layers[1], tr_manager, vm_pwr_mos_fill, bound_box=pwr_mos.bound_box)
