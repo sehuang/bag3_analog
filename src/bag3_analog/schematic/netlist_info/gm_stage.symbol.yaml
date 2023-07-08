@@ -1,0 +1,433 @@
+lib_name: bag3_analog
+cell_name: gm_stage
+view_name: symbol
+bbox:
+  - -13
+  - -4
+  - 228
+  - 244
+terminals:
+  VDD:
+    obj:
+      - 0
+      - layer: 229
+        purpose: 4294967295
+        net: ""
+        bbox:
+          - 76
+          - 236
+          - 84
+          - 244
+    stype: 1
+    ttype: 2
+  v_inm:
+    obj:
+      - 0
+      - layer: 229
+        purpose: 4294967295
+        net: ""
+        bbox:
+          - -4
+          - 76
+          - 4
+          - 84
+    stype: 0
+    ttype: 0
+  v_inp:
+    obj:
+      - 0
+      - layer: 229
+        purpose: 4294967295
+        net: ""
+        bbox:
+          - -4
+          - 156
+          - 4
+          - 164
+    stype: 0
+    ttype: 0
+  v_tail_g:
+    obj:
+      - 0
+      - layer: 229
+        purpose: 4294967295
+        net: ""
+        bbox:
+          - -4
+          - 116
+          - 4
+          - 124
+    stype: 0
+    ttype: 0
+  VSS:
+    obj:
+      - 0
+      - layer: 229
+        purpose: 4294967295
+        net: ""
+        bbox:
+          - 76
+          - -4
+          - 84
+          - 4
+    stype: 2
+    ttype: 2
+  v_tail:
+    obj:
+      - 0
+      - layer: 229
+        purpose: 4294967295
+        net: ""
+        bbox:
+          - 176
+          - 116
+          - 184
+          - 124
+    stype: 0
+    ttype: 1
+  i_outm:
+    obj:
+      - 0
+      - layer: 229
+        purpose: 4294967295
+        net: ""
+        bbox:
+          - 176
+          - 136
+          - 184
+          - 144
+    stype: 0
+    ttype: 1
+  i_outp:
+    obj:
+      - 0
+      - layer: 229
+        purpose: 4294967295
+        net: ""
+        bbox:
+          - 176
+          - 96
+          - 184
+          - 104
+    stype: 0
+    ttype: 1
+shapes:
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 80
+          - 240
+        -
+          - 80
+          - 220
+  -
+    - 7
+    - layer: 229
+      purpose: 237
+      net: ""
+      origin:
+        - 90
+        - 234
+      alignment: 1
+      orient: R270
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: VDD
+  -
+    - 0
+    - layer: 236
+      purpose: 4294967295
+      net: ""
+      bbox:
+        - 0
+        - 0
+        - 180
+        - 240
+  -
+    - 8
+    - layer: 236
+      purpose: 237
+      net: ""
+      origin:
+        - 100
+        - 230
+      alignment: 1
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: "[@instanceName]"
+      evaluator: cdsNLPEvalText
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 0
+          - 80
+        -
+          - 60
+          - 80
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 0
+          - 160
+        -
+          - 60
+          - 160
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 0
+          - 120
+        -
+          - 60
+          - 120
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 80
+          - 0
+        -
+          - 80
+          - 50
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 60
+          - 160
+        -
+          - 60
+          - 40
+        -
+          - 120
+          - 80
+        -
+          - 120
+          - 160
+        -
+          - 60
+          - 200
+        -
+          - 60
+          - 150
+  -
+    - 0
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      bbox:
+        - 20
+        - 20
+        - 160
+        - 220
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 180
+          - 140
+        -
+          - 120
+          - 140
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 180
+          - 100
+        -
+          - 120
+          - 100
+  -
+    - 8
+    - layer: 231
+      purpose: 237
+      net: ""
+      origin:
+        - 35
+        - 210
+      alignment: 4
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: "[@partName]"
+      evaluator: cdsNLPEvalText
+  -
+    - 7
+    - layer: 229
+      purpose: 237
+      net: ""
+      origin:
+        - 6
+        - 90
+      alignment: 1
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: v_inm
+  -
+    - 7
+    - layer: 229
+      purpose: 237
+      net: ""
+      origin:
+        - 6
+        - 170
+      alignment: 1
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: v_inp
+  -
+    - 7
+    - layer: 229
+      purpose: 237
+      net: ""
+      origin:
+        - 6
+        - 130
+      alignment: 1
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: v_tail_g
+  -
+    - 7
+    - layer: 229
+      purpose: 237
+      net: ""
+      origin:
+        - 90
+        - 6
+      alignment: 7
+      orient: R270
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: VSS
+  -
+    - 7
+    - layer: 229
+      purpose: 237
+      net: ""
+      origin:
+        - 174
+        - 130
+      alignment: 7
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: v_tail
+  -
+    - 7
+    - layer: 229
+      purpose: 237
+      net: ""
+      origin:
+        - 174
+        - 150
+      alignment: 7
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: i_outm
+  -
+    - 7
+    - layer: 229
+      purpose: 237
+      net: ""
+      origin:
+        - 174
+        - 110
+      alignment: 7
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: i_outp
+instances:
+  {}
+props:
+  pin#:
+    - 0
+    - 15
+  interfaceLastChanged:
+    - 4
+    - time_val: 1648515456
+  vendorName:
+    - 3
+    - ""
+  partName:
+    - 3
+    - gm_stage
+  portOrder:
+    - 5
+    - name: ILList
+      bin_val: ("i_outm" "i_outp" "v_tail" "VDD" "VSS" "v_inm" "v_inp" "v_tail_g")
+app_defs:
+  _dbLastSavedCounter:
+    - 0
+    - 344
+  _dbvCvTimeStamp:
+    - 0
+    - 344
+  cdbRevision:
+    - 0
+    - 227612

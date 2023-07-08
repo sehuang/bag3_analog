@@ -1,0 +1,358 @@
+lib_name: bag3_analog
+cell_name: res_diff
+view_name: symbol
+bbox:
+  - -38
+  - -4
+  - 218
+  - 344
+terminals:
+  VDD:
+    obj:
+      - 0
+      - layer: 229
+        purpose: 4294967295
+        net: ""
+        bbox:
+          - 156
+          - 176
+          - 164
+          - 184
+    stype: 1
+    ttype: 2
+  m_in:
+    obj:
+      - 0
+      - layer: 229
+        purpose: 4294967295
+        net: ""
+        bbox:
+          - -4
+          - 156
+          - 4
+          - 164
+    stype: 1
+    ttype: 2
+  m_out:
+    obj:
+      - 0
+      - layer: 229
+        purpose: 4294967295
+        net: ""
+        bbox:
+          - 76
+          - -4
+          - 84
+          - 4
+    stype: 0
+    ttype: 2
+  p_in:
+    obj:
+      - 0
+      - layer: 229
+        purpose: 4294967295
+        net: ""
+        bbox:
+          - -4
+          - 176
+          - 4
+          - 184
+    stype: 0
+    ttype: 2
+  p_out:
+    obj:
+      - 0
+      - layer: 229
+        purpose: 4294967295
+        net: ""
+        bbox:
+          - 76
+          - 336
+          - 84
+          - 344
+    stype: 1
+    ttype: 2
+shapes:
+  -
+    - 7
+    - layer: 229
+      purpose: 237
+      net: ""
+      origin:
+        - 6
+        - 150
+      alignment: 1
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: m_in
+  -
+    - 7
+    - layer: 229
+      purpose: 237
+      net: ""
+      origin:
+        - 6
+        - 190
+      alignment: 1
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: p_in
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 140
+          - 180
+        -
+          - 160
+          - 180
+  -
+    - 7
+    - layer: 229
+      purpose: 237
+      net: ""
+      origin:
+        - 154
+        - 190
+      alignment: 7
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: VDD
+  -
+    - 7
+    - layer: 229
+      purpose: 237
+      net: ""
+      origin:
+        - 70
+        - 334
+      alignment: 1
+      orient: R270
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: p_out
+  -
+    - 7
+    - layer: 229
+      purpose: 237
+      net: ""
+      origin:
+        - 90
+        - 6
+      alignment: 7
+      orient: R270
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: m_out
+  -
+    - 0
+    - layer: 236
+      purpose: 4294967295
+      net: ""
+      bbox:
+        - 0
+        - 0
+        - 160
+        - 340
+  -
+    - 8
+    - layer: 236
+      purpose: 237
+      net: ""
+      origin:
+        - 90
+        - 330
+      alignment: 1
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: "[@instanceName]"
+      evaluator: cdsNLPEvalText
+  -
+    - 8
+    - layer: 231
+      purpose: 237
+      net: ""
+      origin:
+        - 10
+        - 305
+      alignment: 4
+      orient: R0
+      font: 5
+      height: 10
+      overbar: false
+      visible: true
+      drafting: true
+      text: "[@partName]"
+      evaluator: cdsNLPEvalText
+  -
+    - 0
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      bbox:
+        - 20
+        - 20
+        - 140
+        - 320
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 80
+          - 0
+        -
+          - 80
+          - 0
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 80
+          - 180
+        -
+          - 80
+          - 180
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 80
+          - 0
+        -
+          - 80
+          - 40
+        -
+          - 60
+          - 60
+        -
+          - 100
+          - 80
+        -
+          - 60
+          - 100
+        -
+          - 100
+          - 120
+        -
+          - 80
+          - 140
+        -
+          - 80
+          - 160
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 80
+          - 180
+        -
+          - 80
+          - 200
+        -
+          - 60
+          - 220
+        -
+          - 100
+          - 240
+        -
+          - 60
+          - 260
+        -
+          - 100
+          - 280
+        -
+          - 80
+          - 300
+        -
+          - 80
+          - 340
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 80
+          - 180
+        -
+          - 0
+          - 180
+  -
+    - 5
+    - layer: 231
+      purpose: 4294967295
+      net: ""
+      points:
+        -
+          - 80
+          - 160
+        -
+          - 0
+          - 160
+instances:
+  {}
+props:
+  interfaceLastChanged:
+    - 4
+    - time_val: 1676499327
+  partName:
+    - 3
+    - res_diff
+  pin#:
+    - 0
+    - 9
+  portOrder:
+    - 5
+    - name: ILList
+      bin_val: ("VDD" "m_in" "p_in" "m_out" "p_out")
+  vendorName:
+    - 3
+    - ""
+app_defs:
+  _dbLastSavedCounter:
+    - 0
+    - 364
+  _dbvCvTimeStamp:
+    - 0
+    - 364
+  cdbRevision:
+    - 0
+    - 227612
