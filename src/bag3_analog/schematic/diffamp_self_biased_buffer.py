@@ -91,5 +91,9 @@ class bag3_analog__diffamp_self_biased_buffer(Module):
         """
         self.instances['XAMP'].design(**diffamp_params)
         self.instances['XBUF'].design(**buf_params)
+        num_inv = len(buf_params['inv_params'])
+        if num_inv & 1:
+            self.reconnect_instance_terminal('XBUF', 'outb', 'v_outb')
+            self.rename_pin('v_out', 'v_outb')
         if not export_mid:
             self.remove_pin('v_mid')
