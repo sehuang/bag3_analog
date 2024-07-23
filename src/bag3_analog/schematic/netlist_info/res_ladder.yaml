@@ -46,6 +46,45 @@ terminals:
           format: 1
     stype: 0
     ttype: 2
+  top:
+    obj:
+      - 1
+      - inst:
+          lib_name: basic
+          cell_name: iopin
+          view_name: symbolr
+          xform:
+            - -150
+            - 100
+            - R0
+          bbox:
+            - -211
+            - 74
+            - -140
+            - 110
+          connections:
+            {}
+          params:
+            {}
+          is_primitive: true
+        attr:
+          layer: 229
+          purpose: 237
+          net: ""
+          origin:
+            - -175
+            - 100
+          alignment: 7
+          orient: R0
+          font: 5
+          height: 10
+          overbar: false
+          visible: true
+          drafting: true
+          attr_type: 0
+          format: 1
+    stype: 0
+    ttype: 2
   bottom:
     obj:
       - 1
@@ -113,45 +152,6 @@ terminals:
           origin:
             - -175
             - 40
-          alignment: 7
-          orient: R0
-          font: 5
-          height: 10
-          overbar: false
-          visible: true
-          drafting: true
-          attr_type: 0
-          format: 1
-    stype: 0
-    ttype: 2
-  top:
-    obj:
-      - 1
-      - inst:
-          lib_name: basic
-          cell_name: iopin
-          view_name: symbolr
-          xform:
-            - -150
-            - 100
-            - R0
-          bbox:
-            - -211
-            - 74
-            - -140
-            - 110
-          connections:
-            {}
-          params:
-            {}
-          is_primitive: true
-        attr:
-          layer: 229
-          purpose: 237
-          net: ""
-          origin:
-            - -175
-            - 100
           alignment: 7
           orient: R0
           font: 5
@@ -305,30 +305,6 @@ shapes:
       drafting: true
       text: bottom
 instances:
-  XMRES:
-    lib_name: BAG_prim
-    cell_name: res_metal_3
-    view_name: symbol
-    xform:
-      - -40
-      - 250
-      - R0
-    bbox:
-      - -132
-      - 176
-      - 94
-      - 250
-    connections:
-      MINUS: bottom
-      PLUS: bottom
-    params:
-      l:
-        - 3
-        - 1u
-      w:
-        - 3
-        - 44n
-    is_primitive: true
   XRES:
     lib_name: BAG_prim
     cell_name: res_standard
@@ -354,31 +330,55 @@ instances:
         - 3
         - 400n
     is_primitive: true
+  XMRES:
+    lib_name: BAG_prim
+    cell_name: res_metal_3
+    view_name: symbol
+    xform:
+      - -40
+      - 250
+      - R0
+    bbox:
+      - -132
+      - 176
+      - 94
+      - 250
+    connections:
+      MINUS: bottom
+      PLUS: bottom
+    params:
+      l:
+        - 3
+        - 1u
+      w:
+        - 3
+        - 44n
+    is_primitive: true
 props:
-  connectivityLastUpdated:
-    - 0
-    - 1136
-  instance#:
-    - 0
-    - 1
-  lastSchematicExtraction:
-    - 4
-    - time_val: 1610652117
-  net#:
-    - 0
-    - 0
   pin#:
     - 0
     - 7
+  instance#:
+    - 0
+    - 1
   schGeometryLastUpdated:
     - 0
     - 1136
   schGeometryVersion:
     - 3
     - sch.ds.gm.1.4
+  lastSchematicExtraction:
+    - 4
+    - time_val: 1610652117
+  connectivityLastUpdated:
+    - 0
+    - 1136
   schXtrVersion:
     - 3
     - sch.10.0
+  net#:
+    - 0
+    - 0
 app_defs:
   _dbLastSavedCounter:
     - 0

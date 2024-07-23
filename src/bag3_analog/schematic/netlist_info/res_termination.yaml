@@ -7,45 +7,6 @@ bbox:
   - 130
   - 110
 terminals:
-  BULK:
-    obj:
-      - 1
-      - inst:
-          lib_name: basic
-          cell_name: iopin
-          view_name: symbolr
-          xform:
-            - -150
-            - 60
-            - R0
-          bbox:
-            - -211
-            - 34
-            - -140
-            - 70
-          connections:
-            {}
-          params:
-            {}
-          is_primitive: true
-        attr:
-          layer: 229
-          purpose: 237
-          net: ""
-          origin:
-            - -175
-            - 60
-          alignment: 7
-          orient: R0
-          font: 5
-          height: 10
-          overbar: false
-          visible: true
-          drafting: true
-          attr_type: 0
-          format: 1
-    stype: 0
-    ttype: 2
   MINUS:
     obj:
       - 1
@@ -74,6 +35,45 @@ terminals:
           origin:
             - -175
             - 80
+          alignment: 7
+          orient: R0
+          font: 5
+          height: 10
+          overbar: false
+          visible: true
+          drafting: true
+          attr_type: 0
+          format: 1
+    stype: 0
+    ttype: 2
+  BULK:
+    obj:
+      - 1
+      - inst:
+          lib_name: basic
+          cell_name: iopin
+          view_name: symbolr
+          xform:
+            - -150
+            - 60
+            - R0
+          bbox:
+            - -211
+            - 34
+            - -140
+            - 70
+          connections:
+            {}
+          params:
+            {}
+          is_primitive: true
+        attr:
+          layer: 229
+          purpose: 237
+          net: ""
+          origin:
+            - -175
+            - 60
           alignment: 7
           orient: R0
           font: 5
@@ -236,15 +236,6 @@ instances:
         - 400n
     is_primitive: true
 props:
-  connectivityLastUpdated:
-    - 0
-    - 219
-  lastSchematicExtraction:
-    - 4
-    - time_val: 1610521525
-  net#:
-    - 0
-    - 0
   pin#:
     - 0
     - 6
@@ -254,9 +245,18 @@ props:
   schGeometryVersion:
     - 3
     - sch.ds.gm.1.4
+  lastSchematicExtraction:
+    - 4
+    - time_val: 1610521525
+  connectivityLastUpdated:
+    - 0
+    - 219
   schXtrVersion:
     - 3
     - sch.10.0
+  net#:
+    - 0
+    - 0
 app_defs:
   _dbLastSavedCounter:
     - 0

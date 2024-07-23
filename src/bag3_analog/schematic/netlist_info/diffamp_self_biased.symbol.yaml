@@ -7,45 +7,6 @@ bbox:
   - 278
   - 204
 terminals:
-  VDD:
-    obj:
-      - 0
-      - layer: 229
-        purpose: 4294967295
-        net: ""
-        bbox:
-          - 136
-          - 196
-          - 144
-          - 204
-    stype: 1
-    ttype: 2
-  VSS:
-    obj:
-      - 0
-      - layer: 229
-        purpose: 4294967295
-        net: ""
-        bbox:
-          - 136
-          - -4
-          - 144
-          - 4
-    stype: 2
-    ttype: 2
-  v_inn:
-    obj:
-      - 0
-      - layer: 229
-        purpose: 4294967295
-        net: ""
-        bbox:
-          - -4
-          - 76
-          - 4
-          - 84
-    stype: 0
-    ttype: 0
   v_inp:
     obj:
       - 0
@@ -59,6 +20,45 @@ terminals:
           - 124
     stype: 0
     ttype: 0
+  v_inn:
+    obj:
+      - 0
+      - layer: 229
+        purpose: 4294967295
+        net: ""
+        bbox:
+          - -4
+          - 76
+          - 4
+          - 84
+    stype: 0
+    ttype: 0
+  VSS:
+    obj:
+      - 0
+      - layer: 229
+        purpose: 4294967295
+        net: ""
+        bbox:
+          - 136
+          - -4
+          - 144
+          - 4
+    stype: 2
+    ttype: 2
+  VDD:
+    obj:
+      - 0
+      - layer: 229
+        purpose: 4294967295
+        net: ""
+        bbox:
+          - 136
+          - 196
+          - 144
+          - 204
+    stype: 1
+    ttype: 2
   v_out:
     obj:
       - 0
@@ -288,22 +288,22 @@ shapes:
 instances:
   {}
 props:
-  interfaceLastChanged:
-    - 4
-    - time_val: 1623031626
-  partName:
-    - 3
-    - diffamp_self_biased
   pin#:
     - 0
     - 10
+  interfaceLastChanged:
+    - 4
+    - time_val: 1623031626
+  vendorName:
+    - 3
+    - ""
+  partName:
+    - 3
+    - diffamp_self_biased
   portOrder:
     - 5
     - name: ILList
       bin_val: ("v_out" "VDD" "VSS" "v_inn" "v_inp")
-  vendorName:
-    - 3
-    - ""
 app_defs:
   _dbLastSavedCounter:
     - 0
