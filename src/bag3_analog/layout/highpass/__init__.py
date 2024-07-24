@@ -76,14 +76,10 @@ class HighPassDiffCore(ResArrayBase):
             nx_dum='Number of dummies on each side, X direction',
             ny_dum='Number of dummies on each side, Y direction',
             h_unit='total height, in resolution units.',
-            sub_type='the substrate type.',
-            threshold='the substrate threshold flavor.',
             in_tr_info='Input track info.',
             out_tr_info='Output track info.',
             bias_idx='Bias port index.',
             vdd_tr_info='Supply track info.',
-            res_type='Resistor intent',
-            res_options='Configuration dictionary for ResArrayBase.',
             cap_spx='Capacitor horizontal separation, in resolution units.',
             cap_spy='Capacitor vertical space from resistor ports, in resolution units.',
             cap_margin='Capacitor space from edge, in resolution units.',
@@ -97,8 +93,6 @@ class HighPassDiffCore(ResArrayBase):
             cap_val=1e-9,
             bias_idx=0,
             # vdd_tr_info=None,
-            # res_type='standard',
-            # res_options=None,
             # cap_spx=0,
             # cap_spy=0,
             # cap_margin=0,
@@ -108,43 +102,14 @@ class HighPassDiffCore(ResArrayBase):
 
     def draw_layout(self):
         h_unit = self.params['h_unit']
-        sub_type = self.params['sub_type']
-        threshold = self.params['threshold']
         in_tr_info = self.params['in_tr_info']
         out_tr_info = self.params['out_tr_info']
         bias_idx = self.params['bias_idx']
         vdd_tr_info = self.params['vdd_tr_info']
-        res_type = self.params['res_type']
-        res_options = self.params['res_options']
         cap_spx = self.params['cap_spx']
         cap_spy = self.params['cap_spy']
         cap_margin = self.params['cap_margin']
         show_pins = self.params['show_pins']
-
-        # if res_options is None:
-        #     my_options = dict(well_end_mode=2)
-        #
-        # else:
-        #     my_options = res_options.copy()
-            # my_options['well_end_mode'] = 2
-        # find resistor length
-        # info = ResArrayBaseInfo(self.grid, sub_type, threshold, top_layer=top_layer,
-        #                         res_type=res_type, grid_type=None, ext_dir='y', options=my_options,
-        #                         connect_up=True, half_blk_x=half_blk_x, half_blk_y=True)
-        #
-        # lmin, lmax = info.get_res_length_bounds()
-        # bin_iter = BinaryIterator(lmin, lmax, step=2)
-        # while bin_iter.has_next():
-        #     lcur = bin_iter.get_next()
-        #     htot = info.get_place_info(lcur, w_unit, 1, 1)[3]
-        #     if htot < h_unit:
-        #         bin_iter.save()
-        #         bin_iter.up()
-        #     else:
-        #         bin_iter.down()
-        #
-        # # draw resistor
-        # l_unit = bin_iter.get_last_save()
 
         # TODO: add methods to find length?
         pinfo = cast(ResBasePlaceInfo,
@@ -234,7 +199,7 @@ class HighPassDiffCore(ResArrayBase):
         self._sch_params = dict(
             l=pinfo.l_res,
             w=pinfo.w_res,
-            intent=res_type,
+            intent=pinfo.res_type,
             nser=nser * self.place_info.ny,
             ndum=(self.params['nx_dum'], self.place_info.ny),
             res_in_info=(pin_layer, res_in_w, res_in_w),
@@ -899,7 +864,7 @@ class HighPassArrayClkCore(TemplateBase):
 
 
 class HighPassColumn(TemplateBase):
-    """A column of differential high-pass RC filters.
+    """A column of differential high-pass RC filters. Uses instances of HighPassDiffCore.
     """
 
     @classmethod
@@ -908,30 +873,10 @@ class HighPassColumn(TemplateBase):
 
     @classmethod
     def get_params_info(cls) -> Dict[str, str]:
-        # TODO: can I replace this with HPF core's function?
+        _base_params = HighPassDiffCore.get_params_info()
         return dict(
-            pinfo='The ResBasePlaceInfo object.',
+            **_base_params,
             narr='Number of high-pass filters.',
-            # w='unit resistor width, in meters.',
-            h_unit='total height, in resolution units.',
-            # lch='channel length, in meters.',
-            # ptap_w='NMOS substrate width, in meters/number of fins.',
-            threshold='the substrate threshold flavor.',
-            sub_type='the substrate type.',
-            # top_layer='The top layer ID',
-            nx_dum='Number of dummies on each side, X direction',
-            ny_dum='Number of dummies on each side, Y direction',
-            in_tr_info='Input track info.',
-            out_tr_info='Output track info.',
-            vdd_tr_info='Supply track info.',
-            # tr_widths='Track width dictionary.',
-            # tr_spaces='Track spacing dictionary.',
-            res_type='Resistor intent',
-            res_options='Configuration dictionary for ResArrayBase.',
-            cap_spx='Capacitor horizontal separation, in resolution units.',
-            cap_spy='Capacitor vertical space from resistor ports, in resolution units.',
-            cap_margin='Capacitor space from edge, in resolution units.',
-            cap_val='Schematic value for analogLib cap',
         )
 
     @classmethod
@@ -946,15 +891,10 @@ class HighPassColumn(TemplateBase):
             cap_spx=0,
             cap_spy=0,
             cap_margin=0,
+            h_unit=None,
         )
 
     def draw_layout(self):
-        # rc_params = dict(w=w, h_unit=h_unit, sub_w=ptap_w, sub_lch=lch, sub_type=sub_type,
-        #                  threshold=threshold, top_layer=top_layer, nser=nser, ndum=ndum,
-        #                  in_tr_info=in_tr_info, out_tr_info=out_tr_info, bias_idx=0,
-        #                  vdd_tr_info=vdd_tr_info, res_type=res_type, res_options=res_options,
-        #                  cap_spx=cap_spx, cap_spy=cap_spy, cap_margin=cap_margin, end_mode=12,
-        #                  sub_tr_w=sub_tr_w, sub_tids=sub_tids, show_pins=False, fill_dummy=fill_dummy,)
         # TODO: is this the best way to wrap stuff?
         rc0_params = dict(
             cls_name='bag3_analog.layout.highpass.HighPassDiffCore',
@@ -1026,7 +966,9 @@ class HighPassColumn(TemplateBase):
 
     def _place_instances(self, ycur, master0, master1):
         inst_list = []
-        h_unit = self.params['h_unit']
+        h_unit = self.params.get('h_unit')
+        if not h_unit:
+            h_unit = master0.bound_box.yh
         h_unit = np.atleast_1d(h_unit)
         assert master0.bound_box.yh == master1.bound_box.yh
         hp_height = master0.bound_box.yh
