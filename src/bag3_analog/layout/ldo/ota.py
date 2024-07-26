@@ -136,10 +136,10 @@ class OTA(MOSBase):
         # place tail devices
         half_seg_tail = seg_tail // 2
         if seg_tail < (iref_loc - start_col): # if tail isn't the widest device
-            tail_loc_l = (iref_loc - half_seg_tail) // 2         # center tail in column
+            tail_loc_l = (iref_loc - half_seg_tail) // 2 - blk_sp        # center tail in column
         else:
             tail_loc_l = 0
-        tail_loc_r = last_col   # and on the other side
+        tail_loc_r = (last_col - (iref_loc + seg_iref)) // 2 + half_seg_tail + blk_sp + iref_loc + seg_iref   # and on the other side
         tail_loc_l += start_col
         n_tail_l = self.add_mos(ridx_tail, tail_loc_l, half_seg_tail, w=wn)  # left
         n_tail_r = self.add_mos(ridx_tail, tail_loc_r, half_seg_tail, w=wn, flip_lr=True)  # right
