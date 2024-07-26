@@ -59,7 +59,6 @@ class DiffAmpSelfBiased(MOSBase):
             ridx_ngm='index for nmos row with gm transistors',
             ridx_pgm='index for pmos row with gm transistors',
             ridx_ptail='index for pmos row with head transistors',
-            show_pins='True to show pins',
             flip_tile='True to flip all tiles',
             draw_taps='LEFT or RIGHT or BOTH or NONE',
             sig_locs='Signal locations for top horizontal metal layer pins',
@@ -74,7 +73,6 @@ class DiffAmpSelfBiased(MOSBase):
             ridx_ngm=1,
             ridx_pgm=-2,
             ridx_ptail=-1,
-            show_pins=False,
             flip_tile=False,
             draw_taps='NONE',
             sig_locs={},
@@ -193,8 +191,11 @@ class DiffAmpSelfBiased(MOSBase):
         vdd_hm = self.connect_wires(vdd_table[hm_layer])
         self.add_pin('VDD_conn', vdd_table[self.conn_layer], hide=True)
         self.add_pin('VDD_hm', vdd_hm, hide=True)
-        self.add_pin('VDD_vm', vdd_table[vm_layer], hide=True)
-        self.add_pin('VDD', self.connect_wires(vdd_table[xm_layer]))
+        if vdd_table[vm_layer]:
+            self.add_pin('VDD_vm', vdd_table[vm_layer], hide=True)
+            self.add_pin('VDD', self.connect_wires(vdd_table[xm_layer]))
+        else:
+            self.add_pin('VDD', vdd_hm)
 
         vss_tid = self.get_track_id(ridx_ntail, MOSWireType.DS, wire_name='sup')
         vss = self.connect_to_tracks(ntail_inst[sup_term_n], vss_tid)
@@ -202,8 +203,11 @@ class DiffAmpSelfBiased(MOSBase):
         vss_hm = self.connect_wires(vss_table[hm_layer])
         self.add_pin('VSS_conn', vss_table[self.conn_layer], hide=True)
         self.add_pin('VSS_hm', vss_hm, hide=True)
-        self.add_pin('VSS_vm', vss_table[vm_layer], hide=True)
-        self.add_pin('VSS', self.connect_wires(vss_table[xm_layer]))
+        if vss_table[vm_layer]:
+            self.add_pin('VSS_vm', vss_table[vm_layer], hide=True)
+            self.add_pin('VSS', self.connect_wires(vss_table[xm_layer]))
+        else:
+            self.add_pin('VSS', vss_hm)
 
         # 2. s terminals of gm transistors connect to drain terminals of tail
         tail_p_tid = self.get_track_id(ridx_ptail, MOSWireType.DS, wire_name='sig_in')
@@ -293,9 +297,9 @@ class DiffAmpSelfBiased(MOSBase):
                                                                                     'sig_in'))
 
         # pins
-        self.add_pin('v_inp', inp, show=self.show_pins)
-        self.add_pin('v_inn', inn, show=self.show_pins)
-        self.add_pin('v_out', out, show=self.show_pins)
+        self.add_pin('v_inp', inp)
+        self.add_pin('v_inn', inn)
+        self.add_pin('v_out', out)
 
         # set properties
         self.sch_params = dict(
@@ -345,7 +349,6 @@ class DiffAmpSelfBiasedBuffer(MOSBase):
             ridx_ngm='index for nmos row with gm transistors',
             ridx_pgm='index for pmos row with gm transistors',
             ridx_ptail='index for pmos row with head transistors',
-            show_pins='True to show pins',
             flip_tile='True to flip all tiles',
             draw_taps='LEFT or RIGHT or BOTH or NONE',
             sig_locs='Signal locations for top horizontal metal layer pins',
@@ -361,7 +364,6 @@ class DiffAmpSelfBiasedBuffer(MOSBase):
             ridx_ngm=1,
             ridx_pgm=-2,
             ridx_ptail=-1,
-            show_pins=False,
             flip_tile=False,
             draw_taps='NONE',
             sig_locs={},
@@ -378,16 +380,21 @@ class DiffAmpSelfBiasedBuffer(MOSBase):
         ridx_pgm: int = self.params['ridx_pgm']
 
         # create masters
-        diffamp_params = self.params.copy(remove=['draw_taps'], append=dict(show_pins=False))
+        diffamp_params = self.params.copy(remove=['draw_taps'])
         diffamp_master = self.new_template(DiffAmpSelfBiased, params=diffamp_params)
         diffamp_ncol = diffamp_master.num_cols
 
         segp_list: Sequence[int] = self.params['segp_list']
         segn_list: Sequence[int] = self.params['segn_list']
-        if len(segp_list) % 2 == 1 or len(segn_list) % 2 == 1:
-            raise ValueError('Buffer should have even length to preserve polarity.')
-        buf_params = self.params.copy(append=dict(is_guarded=True, show_pins=False,
-                                                  ridx_p=ridx_pgm, ridx_n=ridx_ngm,
+        assert len(segp_list) == len(segn_list)
+        num_inv = len(segp_list)
+        if num_inv & 1:
+            out_name = 'v_outb'
+            buf_out = 'outb'
+        else:
+            out_name = 'v_out'
+            buf_out = 'out'
+        buf_params = self.params.copy(append=dict(is_guarded=True, ridx_p=ridx_pgm, ridx_n=ridx_ngm,
                                                   vertical_sup=True))
         buf_master = self.new_template(InvChainCore, params=buf_params)
         buf_ncol = buf_master.num_cols
@@ -440,6 +447,8 @@ class DiffAmpSelfBiasedBuffer(MOSBase):
         if vdd_table[vm_layer]:
             self.add_pin('VDD_vm', vdd_table[vm_layer], hide=True)
             self.add_pin('VDD', self.connect_wires(vdd_table[xm_layer]))
+        else:
+            self.add_pin('VDD', vdd_table[hm_layer])
 
         vss_table[hm_layer].append(diffamp_inst.get_pin('VSS_hm'))
         self.connect_to_track_wires(buf_inst.get_all_port_pins('VSS'), vss_table[hm_layer])
@@ -448,20 +457,26 @@ class DiffAmpSelfBiasedBuffer(MOSBase):
         if vss_table[vm_layer]:
             self.add_pin('VSS_vm', vss_table[vm_layer], hide=True)
             self.add_pin('VSS', self.connect_wires(vss_table[xm_layer]))
+        else:
+            self.add_pin('VSS', vss_table[hm_layer])
 
         # 2. export inp, inn
         self.add_pin('v_inp', self.extend_wires(diffamp_inst.get_pin('v_inp'), lower=0))
         self.add_pin('v_inn', self.extend_wires(diffamp_inst.get_pin('v_inn'), lower=0))
 
         # 3. connect diffamp output to buffer input
-        mid_vm = diffamp_inst.get_pin('v_out')
-        mid = self.connect_to_track_wires(buf_inst.get_pin('in'), mid_vm)
+        mid_xm = diffamp_inst.get_pin('v_out')
+        mid = self.connect_to_track_wires(buf_inst.get_pin('in'), mid_xm)
         self.add_pin('v_mid', mid, hide=not export_mid)
 
         # 4. get final output on top horizontal metal
-        out = self.connect_to_tracks(buf_inst.get_pin('out'), mid_vm.track_id,
+        if num_inv == 1:
+            out_tid = self.tr_manager.get_next_track_obj(mid_xm, 'sig', 'sig')
+        else:
+            out_tid = mid_xm.track_id
+        out = self.connect_to_tracks(buf_inst.get_pin(buf_out), out_tid,
                                      track_upper=self.bound_box.w)
-        self.add_pin('v_out', out)
+        self.add_pin(out_name, out)
 
         # set properties
         self.sch_params = dict(

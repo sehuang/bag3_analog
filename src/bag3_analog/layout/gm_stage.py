@@ -59,7 +59,8 @@ class GmStage(MOSBase):
         seg_tail = seg_dict['tail']
         if seg_tail % 2:
             raise ValueError(f'This generator requires seg_tail={seg_tail} to be even.')
-        if self.can_abut_mos:
+        gm_row_info = _pinfo.get_row_place_info(ridx_gm).row_info
+        if self.can_abut_mos(gm_row_info):
             seg_sep = 0
         else:
             seg_sep = 4
@@ -84,8 +85,7 @@ class GmStage(MOSBase):
         # gm cells
         gm_left_inst = self.add_mos(ridx_gm, seg_tot2 - seg_sep2, seg_gm, tile_idx=tile_logic, w=w, flip_lr=True)
         gm_right_inst = self.add_mos(ridx_gm, seg_tot2 + seg_sep2, seg_gm, tile_idx=tile_logic, w=w)
-        _row_info = _pinfo.get_row_place_info(ridx_gm).row_info
-        w_gm, th_gm = _row_info.width, _row_info.threshold
+        w_gm, th_gm = gm_row_info.width, gm_row_info.threshold
 
         # tap cells
         tap_conn = self.add_substrate_contact(0, 0, tile_idx=tile_tap, seg=seg_tot, port_mode=SubPortMode.ODD)
