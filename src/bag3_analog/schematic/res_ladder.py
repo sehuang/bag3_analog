@@ -92,19 +92,11 @@ class bag3_analog__res_ladder(Module):
                              [('PLUS', sup_name), ('MINUS', sup_name), ('BULK', sup_name)])
 
         # Design metal resistors
-        mres_w, mres_l, mres_layer = mres_info
-        if self.tech_info.has_res_metal():
-            self.instances['XMRES'].design(w=mres_w, l=mres_l, layer=mres_layer)
-            self.reconnect_instance('XMRES', [('PLUS', 'out<0>'), ('MINUS', 'VSS' if bot_vss else 'bottom')])
-
-            # Rename out
-            self.rename_pin('out', f'out<{ncore - 1}:0>')
-            self.has_idx0 = True
-        else:
-            self.remove_instance('XMRES')
-            self.reconnect_instance_terminal(f'XRES<{ncore - 1}:0>', 'MINUS', f'out<{ncore - 1}:1>,VSS')
-            self.rename_pin('out', f'out<{ncore - 1}:1>')
-            self.has_idx0 = False
+        # mres_w, mres_l, mres_layer = mres_info
+        # FIXME: THIS FILE IS HACKED SPECIFICALLY FOR SKY130 DO NOT PUSH
+        self.reconnect_instance_terminal(f'XRES<{ncore - 1}:0>', 'MINUS', f'out<{ncore - 1}:1>,VSS')
+        self.rename_pin('out', f'out<{ncore - 1}:1>')
+        self.has_idx0 = False
 
         if top_vdd:
             self.rename_pin('top', 'VDD')
